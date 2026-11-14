@@ -16,11 +16,11 @@ export default async function handler(req: Request, res: Response) {
         ? capturedPath.split('/').filter(Boolean)
         : [];
 
-    if (pathSegments.length > 0 && (!requestUrl.pathname.startsWith('/api/') || requestUrl.pathname.includes('[...path]'))) {
+    if (pathSegments.length > 0) {
       requestUrl.pathname = `/api/${pathSegments.map(encodeURIComponent).join('/')}`;
       requestUrl.searchParams.delete('path');
-    } else if (!requestUrl.pathname.startsWith('/api/')) {
-      requestUrl.pathname = `/api${requestUrl.pathname.startsWith('/') ? requestUrl.pathname : `/${requestUrl.pathname}`}`;
+    } else {
+      requestUrl.pathname = '/api';
     }
 
     req.url = `${requestUrl.pathname}${requestUrl.search}`;

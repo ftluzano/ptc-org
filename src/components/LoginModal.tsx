@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle, ShieldCheck, X } from 'lucide-react';
 import {
-  CESSCA_ADMIN_EMAIL,
   CESSCA_ADMIN_NAME,
   ORGANIZATIONS,
 } from '../config/org-config';
@@ -46,15 +45,15 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
 
   return (
     <div
-      className="portal-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-950/50 p-4 backdrop-blur-xs"
+      className="portal-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-950/50 p-2 backdrop-blur-xs sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="login-modal-title"
     >
-      <div className="portal-modal-panel max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-stone-200 bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
+      <div className="portal-modal-panel max-h-[calc(100dvh-1rem)] w-full max-w-4xl overflow-y-auto rounded-xl border border-stone-200 bg-white shadow-xl sm:max-h-[90vh] sm:rounded-2xl">
+        <div className="flex items-center justify-between gap-3 border-b border-stone-200 px-4 py-3 sm:px-6 sm:py-4">
           <div>
-            <h2 id="login-modal-title" className="font-display text-xl font-semibold text-stone-900">
+            <h2 id="login-modal-title" className="font-display text-lg font-semibold leading-tight text-stone-900 sm:text-xl">
               Officer & CESSCA Portal Sign-In
             </h2>
             <p className="mt-0.5 text-xs text-stone-500">
@@ -71,8 +70,8 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
           </button>
         </div>
 
-        <div className="grid gap-6 p-6 md:grid-cols-12">
-          <form onSubmit={handleSubmit} className="space-y-4 md:col-span-5">
+        <div className="grid gap-4 p-4 sm:gap-6 sm:p-6 md:grid-cols-12">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:col-span-5">
             <div>
               <h3 className="text-sm font-semibold text-stone-900">Account Credentials</h3>
               <p className="mt-1 text-xs text-stone-500">
@@ -128,7 +127,7 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
             </button>
           </form>
 
-          <section className="space-y-3 border-t border-stone-200 pt-5 md:col-span-7 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+          <section className="space-y-2.5 border-t border-stone-200 pt-3 sm:space-y-3 sm:pt-5 md:col-span-7 md:border-l md:border-t-0 md:pl-6 md:pt-0">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold text-stone-900">Organization Accounts</h3>
               <span className="text-xs text-stone-500">12 organizations + CESSCA</span>
@@ -152,11 +151,10 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
                 <span className="block truncate text-sm font-semibold text-stone-900">
                   {CESSCA_ADMIN_NAME}
                 </span>
-                <span className="block truncate text-xs text-stone-500">{CESSCA_ADMIN_EMAIL}</span>
               </span>
             </button>
 
-            <div className="portal-stagger grid max-h-64 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+            <div className="portal-stagger grid max-h-44 grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:max-h-64 sm:grid-cols-2 sm:gap-2">
               {ORGANIZATIONS.map((org) => (
                 <button
                   key={org.code}
@@ -164,14 +162,14 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
                   disabled={submitting}
                   aria-pressed={selectedAccount === org.code}
                   onClick={() => chooseAccount(org.code)}
-                  className={`flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  className={`flex min-w-0 cursor-pointer items-center gap-1.5 rounded-lg border p-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2.5 sm:p-2.5 ${
                     selectedAccount === org.code
                       ? 'border-[#1E3A8A] bg-[#1E3A8A]/5'
                       : 'border-stone-200 bg-white hover:border-stone-400 hover:bg-stone-50'
                   }`}
                 >
                   <span
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[10px] font-mono font-semibold text-white"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[9px] font-mono font-semibold text-white sm:h-8 sm:w-8 sm:text-[10px]"
                     style={{ backgroundColor: org.accentColor }}
                   >
                     {org.shortName.slice(0, 3).toUpperCase()}
@@ -180,7 +178,6 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
                     <span className="block truncate text-xs font-semibold text-stone-900">
                       {org.shortName}
                     </span>
-                    <span className="block truncate text-[11px] text-stone-500">{org.email}</span>
                   </span>
                 </button>
               ))}

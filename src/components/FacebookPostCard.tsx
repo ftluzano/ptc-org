@@ -95,9 +95,9 @@ export function FacebookPostCard({
   }
 
   return (
-    <article className="portal-post-card overflow-hidden rounded-[22px] border border-stone-200 bg-white/90 shadow-[0_16px_28px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_44px_rgba(15,23,42,0.10)]">
-      <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
-        <div className="flex min-w-0 items-center gap-3">
+    <article className="portal-post-card overflow-hidden rounded-[18px] border border-stone-200 bg-white/90 shadow-[0_16px_28px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_44px_rgba(15,23,42,0.10)] sm:rounded-[22px]">
+      <div className="flex items-start justify-between gap-2 px-3.5 pb-2.5 pt-3.5 sm:gap-3 sm:px-5 sm:pb-3 sm:pt-5">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <OrgEmblem org={org} size="sm" imageUrl={organizationImageUrl} />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -133,13 +133,13 @@ export function FacebookPostCard({
         </span>
       </div>
 
-      <div className="space-y-2 px-5 pb-4">
+      <div className="space-y-2 px-3.5 pb-3.5 sm:px-5 sm:pb-4">
         <div className="flex items-center gap-2 text-xs font-medium text-[#1E3A8A]">
           <Calendar className="w-3.5 h-3.5 shrink-0" />
           <span>Event Date: {formatEventDate(post.eventDate)}</span>
         </div>
-        <h3 className="text-lg font-semibold leading-snug text-stone-900">{post.title}</h3>
-        <p className="whitespace-pre-line text-[15px] leading-relaxed text-stone-700">
+        <h3 className="text-base font-semibold leading-snug text-stone-900 sm:text-lg">{post.title}</h3>
+        <p className="whitespace-pre-line text-sm leading-relaxed text-stone-700 sm:text-[15px]">
           {post.caption}
         </p>
       </div>
@@ -169,12 +169,12 @@ export function FacebookPostCard({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4 border-t border-stone-100 px-5 py-3 text-xs text-stone-600">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-stone-100 px-3 py-2.5 text-xs text-stone-600 sm:flex-nowrap sm:gap-4 sm:px-5 sm:py-3">
+        <div className="flex min-w-0 items-center gap-1 sm:gap-4">
           <button
             type="button"
             onClick={() => void handleToggleLike()}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-medium transition-colors cursor-pointer sm:gap-1.5 sm:px-3 ${
               liked
                 ? 'bg-[#1E3A8A]/10 text-[#1E3A8A]'
                 : 'text-stone-700 hover:bg-stone-100'
@@ -188,7 +188,7 @@ export function FacebookPostCard({
           <button
             type="button"
             onClick={() => void handleShare()}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium text-stone-700 transition-colors hover:bg-stone-100 cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-medium text-stone-700 transition-colors hover:bg-stone-100 cursor-pointer sm:gap-1.5 sm:px-3"
           >
             {copied ? (
               <>
@@ -208,7 +208,7 @@ export function FacebookPostCard({
           <button
             type="button"
             onClick={() => onOpenOrg(post.orgCode)}
-            className="shrink-0 whitespace-nowrap text-xs font-medium text-[#1E3A8A] transition hover:underline cursor-pointer"
+            className="shrink-0 whitespace-nowrap text-[11px] font-medium text-[#1E3A8A] transition hover:underline cursor-pointer sm:text-xs"
           >
             Visit {post.orgShortName} Page →
           </button>

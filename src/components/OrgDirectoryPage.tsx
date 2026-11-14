@@ -34,8 +34,8 @@ export function OrgDirectoryPage({
   }, [organizations, searchQuery]);
 
   return (
-    <main className="portal-page-enter mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
-      <section className="relative isolate min-h-[390px] overflow-hidden rounded-[24px] bg-[#172554] shadow-[0_24px_54px_rgba(15,23,42,0.2)] sm:min-h-[440px] lg:min-h-[480px]">
+    <main className="portal-page-enter mx-auto max-w-7xl space-y-6 px-3 py-4 sm:space-y-8 sm:px-6 sm:py-8">
+      <section className="relative isolate min-h-[340px] overflow-hidden rounded-[20px] bg-[#172554] shadow-[0_24px_54px_rgba(15,23,42,0.2)] sm:min-h-[440px] sm:rounded-[24px] lg:min-h-[480px]">
         <img
           src={CAMPUS_HERO_IMAGE}
           alt="Pateros Technological College main building entrance"
@@ -50,24 +50,24 @@ export function OrgDirectoryPage({
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-t from-[#101c3c]/45 via-transparent to-transparent"
         />
-        <div className="relative z-10 flex min-h-[390px] items-center px-6 py-10 sm:min-h-[440px] sm:px-10 lg:min-h-[480px] lg:px-14">
+        <div className="relative z-10 flex min-h-[340px] items-center px-5 py-8 sm:min-h-[440px] sm:px-10 sm:py-10 lg:min-h-[480px] lg:px-14">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-50 backdrop-blur-sm sm:text-xs">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-blue-50 backdrop-blur-sm sm:px-3 sm:text-xs sm:tracking-[0.18em]">
               <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
               Pateros Technological College · Student Life
             </div>
-            <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 font-display text-3xl font-semibold leading-[1.08] tracking-tight text-white sm:mt-5 sm:text-5xl lg:text-6xl">
               Find your people.
               <span className="mt-1 block text-blue-100">Shape your campus.</span>
             </h1>
-            <p className="mt-5 max-w-xl text-sm leading-6 text-blue-50/90 sm:text-base sm:leading-7">
+            <p className="mt-4 max-w-xl text-sm leading-5 text-blue-50/90 sm:mt-5 sm:text-base sm:leading-7">
               Discover the official PTC organizations, explore your interests, and find a community
               to grow with.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3 sm:mt-7">
               <a
                 href="#org-directory"
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#172554] shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#172554]"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-[#172554] shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#172554] sm:px-5 sm:py-3 sm:text-sm"
               >
                 Explore organizations
                 <ArrowDown className="h-4 w-4" />
@@ -84,10 +84,10 @@ export function OrgDirectoryPage({
         </div>
       </section>
 
-      <section id="org-directory" className="scroll-mt-24 space-y-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <section id="org-directory" className="scroll-mt-20 space-y-4 sm:scroll-mt-24 sm:space-y-5">
+        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <h2 className="font-display text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
               Explore Student Organizations
             </h2>
           </div>
@@ -100,7 +100,7 @@ export function OrgDirectoryPage({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, president, or interest"
               aria-label="Search student organizations"
-              className="w-full rounded-2xl border border-stone-200 bg-white py-3.5 pl-11 pr-4 text-sm text-stone-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10"
+              className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-10 pr-3.5 text-sm text-stone-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 sm:rounded-2xl sm:py-3.5 sm:pl-11 sm:pr-4"
             />
           </div>
         </div>
@@ -130,7 +130,7 @@ export function OrgDirectoryPage({
             </button>
           </div>
         ) : (
-          <div className="portal-stagger grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="portal-stagger grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredOrgs.map((org) => {
               const stats = statsByCode[org.code];
               const approvedCount = stats?.approvedCount ?? 0;
@@ -140,7 +140,7 @@ export function OrgDirectoryPage({
                   key={org.code}
                   type="button"
                   onClick={() => onSelectOrg(org.code)}
-                  className="group flex flex-col justify-between gap-4 rounded-[20px] border border-stone-200 bg-white/90 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A8A] cursor-pointer"
+                  className="group flex flex-col justify-between gap-3 rounded-[18px] border border-stone-200 bg-white/90 p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A8A] cursor-pointer sm:gap-4 sm:rounded-[20px] sm:p-4"
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-start justify-between gap-3">

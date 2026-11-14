@@ -175,13 +175,13 @@ export function CesscaAdminPage({
   const selectedImgUrl = resolvePostImageUrl(selectedItem?.imageUrl);
 
   return (
-    <main className="portal-page-enter mx-auto max-w-7xl space-y-4 px-4 py-5 sm:px-6 sm:py-6">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+    <main className="portal-page-enter mx-auto max-w-7xl space-y-3 px-3 py-4 sm:space-y-4 sm:px-6 sm:py-6">
+      <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-end sm:gap-3">
         <div>
           <div className="text-xs uppercase tracking-widest text-stone-500 font-medium">
             Super Administrator Moderation Console
           </div>
-          <h1 className="font-display text-3xl font-semibold text-stone-900 mt-1">
+          <h1 className="mt-1 font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
             CESSCA Event Letter Queue
           </h1>
         </div>
@@ -199,28 +199,28 @@ export function CesscaAdminPage({
       </div>
 
       {/* Summary KPI Strip */}
-      <div className="portal-stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-xl border border-stone-200 bg-white p-3">
-          <div className="text-xs text-stone-500">Pending Review</div>
-          <div className="font-mono text-2xl font-semibold text-amber-700 tabular-nums mt-1">
+      <div className="portal-stagger grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+        <div className="rounded-xl border border-stone-200 bg-white p-2.5 sm:p-3">
+          <div className="text-[11px] text-stone-500 sm:text-xs">Pending Review</div>
+          <div className="mt-1 font-mono text-xl font-semibold text-amber-700 tabular-nums sm:text-2xl">
             {counts.pending}
           </div>
         </div>
-        <div className="rounded-xl border border-stone-200 bg-white p-3">
-          <div className="text-xs text-stone-500">Approved & Published</div>
-          <div className="font-mono text-2xl font-semibold text-emerald-700 tabular-nums mt-1">
+        <div className="rounded-xl border border-stone-200 bg-white p-2.5 sm:p-3">
+          <div className="text-[11px] text-stone-500 sm:text-xs">Approved & Published</div>
+          <div className="mt-1 font-mono text-xl font-semibold text-emerald-700 tabular-nums sm:text-2xl">
             {counts.approved}
           </div>
         </div>
-        <div className="rounded-xl border border-stone-200 bg-white p-3">
-          <div className="text-xs text-stone-500">Rejected with Feedback</div>
-          <div className="font-mono text-2xl font-semibold text-red-700 tabular-nums mt-1">
+        <div className="rounded-xl border border-stone-200 bg-white p-2.5 sm:p-3">
+          <div className="text-[11px] text-stone-500 sm:text-xs">Rejected with Feedback</div>
+          <div className="mt-1 font-mono text-xl font-semibold text-red-700 tabular-nums sm:text-2xl">
             {counts.rejected}
           </div>
         </div>
-        <div className="rounded-xl border border-stone-200 bg-white p-3">
-          <div className="text-xs text-stone-500">Total Letters Logged</div>
-          <div className="font-mono text-2xl font-semibold text-stone-900 tabular-nums mt-1">
+        <div className="rounded-xl border border-stone-200 bg-white p-2.5 sm:p-3">
+          <div className="text-[11px] text-stone-500 sm:text-xs">Total Letters Logged</div>
+          <div className="mt-1 font-mono text-xl font-semibold text-stone-900 tabular-nums sm:text-2xl">
             {counts.all}
           </div>
         </div>

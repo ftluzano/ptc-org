@@ -59,7 +59,7 @@ export function GlobalFeedPage({
   }, [loadFeed]);
 
   return (
-    <main className="portal-page-enter mx-auto max-w-4xl space-y-4 px-4 py-5 sm:px-6 sm:py-6">
+    <main className="portal-page-enter mx-auto max-w-4xl space-y-3 px-3 py-4 sm:space-y-4 sm:px-6 sm:py-6">
       <div className="flex items-center justify-between gap-4">
         <button
           type="button"
@@ -71,8 +71,8 @@ export function GlobalFeedPage({
         </button>
       </div>
 
-      <div className="space-y-2 rounded-[20px] border border-stone-200 bg-white/85 p-4 shadow-sm">
-        <h1 className="font-display text-3xl font-semibold text-stone-900">
+      <div className="space-y-1.5 rounded-2xl border border-stone-200 bg-white/85 p-3.5 shadow-sm sm:space-y-2 sm:rounded-[20px] sm:p-4">
+        <h1 className="font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
           Global Campus Announcements
         </h1>
         <p className="text-sm text-stone-600">
@@ -81,11 +81,11 @@ export function GlobalFeedPage({
         </p>
       </div>
 
-      <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-stone-200 bg-white/80 p-1.5 shadow-sm">
+      <div className="flex items-center gap-1 overflow-x-auto rounded-xl border border-stone-200 bg-white/80 p-1 shadow-sm sm:gap-1.5 sm:p-1.5">
         <button
           type="button"
           onClick={() => setSelectedOrg('all')}
-          className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+          className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all whitespace-nowrap cursor-pointer sm:px-3 sm:text-xs ${
             selectedOrg === 'all'
               ? 'bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.22)]'
               : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
@@ -98,7 +98,7 @@ export function GlobalFeedPage({
             key={org.code}
             type="button"
             onClick={() => setSelectedOrg(org.code)}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+            className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all whitespace-nowrap cursor-pointer sm:px-3 sm:text-xs ${
               selectedOrg === org.code
                 ? 'bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.22)]'
                 : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'

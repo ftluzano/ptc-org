@@ -16,6 +16,7 @@ export interface OrganizationProfile {
   aboutText: string;
   organizationName: string;
   organizationShortName: string;
+  presidentName: string;
 }
 
 export interface OrgPost {

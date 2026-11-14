@@ -11,13 +11,13 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import { resolvePostImageUrl } from '../lib/mediaAssets';
+import { notifyPortalDataChanged } from '../lib/portalUpdates';
 import type { PostStatus, SubmissionQueueItem } from '../types/portal';
 
 interface CesscaAdminPageProps {
   onSelectOrg: (orgCode: string) => void;
   onOpenLogin: () => void;
   onOpenLightbox: (imageUrl: string, caption: string) => void;
-  onReviewCompleted: () => void;
 }
 
 type QueueFilter = 'all' | PostStatus;
@@ -32,12 +32,7 @@ function formatDate(iso: string): string {
   });
 }
 
-export function CesscaAdminPage({
-  onSelectOrg,
-  onOpenLogin,
-  onOpenLightbox,
-  onReviewCompleted,
-}: CesscaAdminPageProps) {
+export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: CesscaAdminPageProps) {
   const { user, getAuthHeaders } = useAuth();
   const [items, setItems] = useState<SubmissionQueueItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +50,6 @@ export function CesscaAdminPage({
       setLoading(false);
       return;
     }
-    setLoading(true);
     try {
       const res = await fetch('/api/cessca/queue', {
         headers: getAuthHeaders(),
@@ -105,8 +99,8 @@ export function CesscaAdminPage({
   }, [items, statusFilter, searchQuery]);
 
   const selectedItem = useMemo(
-    () => items.find((i) => i.id === selectedId) ?? filteredItems[0] ?? null,
-    [items, selectedId, filteredItems]
+    () => filteredItems.find((i) => i.id === selectedId) ?? filteredItems[0] ?? null,
+    [selectedId, filteredItems]
   );
 
   useEffect(() => {
@@ -117,6 +111,10 @@ export function CesscaAdminPage({
   async function handleReview(action: 'approve' | 'reject') {
     if (!selectedItem) return;
     setActionError(null);
+    if (selectedItem.status !== 'pending') {
+      setActionError('Only pending letters can be approved or rejected.');
+      return;
+    }
 
     if (action === 'reject' && feedbackInput.trim().length < 4) {
       setActionError('Please enter reviewer feedback explaining why the letter is rejected.');
@@ -140,8 +138,11 @@ export function CesscaAdminPage({
       if (!res.ok) {
         throw new Error(data.error || 'Failed to update submission status.');
       }
-      await loadQueue();
-      onReviewCompleted();
+      const updatedItem = data.item as SubmissionQueueItem;
+      setItems((current) =>
+        current.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+      );
+      notifyPortalDataChanged();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Review failed.');
     } finally {
@@ -149,9 +150,13 @@ export function CesscaAdminPage({
     }
   }
 
-  async function handleDeletePending() {
-    if (!selectedItem || selectedItem.status !== 'pending') return;
-    if (!window.confirm(`Permanently delete ${selectedItem.letterRef}? This cannot be undone.`)) {
+  async function handleDeleteRecord() {
+    if (!selectedItem) return;
+    if (
+      !window.confirm(
+        `Permanently delete ${selectedItem.letterRef} from both the organization and CESSCA records? This cannot be undone.`
+      )
+    ) {
       return;
     }
 
@@ -164,12 +169,13 @@ export function CesscaAdminPage({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to delete pending request.');
+        throw new Error(data.error || 'Failed to delete the record.');
       }
-      await loadQueue();
-      onReviewCompleted();
+      setItems((current) => current.filter((item) => item.id !== selectedItem.id));
+      setSelectedId(null);
+      notifyPortalDataChanged();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to delete pending request.');
+      setActionError(err instanceof Error ? err.message : 'Failed to delete the record.');
     } finally {
       setProcessingAction(null);
     }
@@ -452,39 +458,45 @@ export function CesscaAdminPage({
                 </div>
               )}
 
-              <div className={`grid gap-3 pt-1 ${selectedItem.status === 'pending' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              <div
+                className={`grid gap-3 pt-1 ${
+                  selectedItem.status === 'pending' ? 'grid-cols-3' : 'grid-cols-1'
+                }`}
+              >
+                <button
+                  type="button"
+                  disabled={processingAction !== null}
+                  onClick={() => void handleDeleteRecord()}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50 cursor-pointer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>{processingAction === 'delete' ? 'Deleting...' : 'Delete Record'}</span>
+                </button>
                 {selectedItem.status === 'pending' && (
-                  <button
-                    type="button"
-                    disabled={processingAction !== null}
-                    onClick={() => void handleDeletePending()}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50 cursor-pointer"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span>{processingAction === 'delete' ? 'Deleting...' : 'Delete Request'}</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  disabled={processingAction !== null}
-                  onClick={() => void handleReview('reject')}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  <XCircle className="w-4 h-4" />
-                  <span>{processingAction === 'reject' ? 'Rejecting...' : 'Reject Letter'}</span>
-                </button>
+                  <>
+                    <button
+                      type="button"
+                      disabled={processingAction !== null}
+                      onClick={() => void handleReview('reject')}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>{processingAction === 'reject' ? 'Rejecting...' : 'Reject Letter'}</span>
+                    </button>
 
-                <button
-                  type="button"
-                  disabled={processingAction !== null}
-                  onClick={() => void handleReview('approve')}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>
-                    {processingAction === 'approve' ? 'Publishing...' : 'Approve & Publish'}
-                  </span>
-                </button>
+                    <button
+                      type="button"
+                      disabled={processingAction !== null}
+                      onClick={() => void handleReview('approve')}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>
+                        {processingAction === 'approve' ? 'Publishing...' : 'Approve & Publish'}
+                      </span>
+                    </button>
+                  </>
+                )}
               </div>
             </>
           )}

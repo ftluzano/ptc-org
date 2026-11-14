@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { ORGANIZATIONS, getOrgByCode, type OrganizationConfig } from './config/org-config';
 import { AuthProvider } from './hooks/useAuth';
 import { useLiveUpdates } from './hooks/useLiveUpdates';
-import type { AuthUser, OrgStats } from './types/portal';
+import type { AuthUser, OrganizationProfile, OrgStats } from './types/portal';
 import { TopBar, type ActiveRoute } from './components/TopBar';
 import { OrgDirectoryPage } from './components/OrgDirectoryPage';
 import { OrgProfilePage } from './components/OrgProfilePage';
@@ -85,6 +85,7 @@ function PortalShell() {
                 ...org,
                 shortName: updated.shortName,
                 fullName: updated.fullName,
+                president: updated.president,
                 aboutText: updated.aboutText,
               }
             : org;
@@ -108,6 +109,27 @@ function PortalShell() {
   useEffect(() => {
     void fetchOrgStats();
   }, [fetchOrgStats]);
+
+  const handleOrganizationProfileUpdated = useCallback(
+    (orgCode: string, profile: OrganizationProfile) => {
+      const baseOrg = getOrgByCode(orgCode);
+      setOrganizations((current) =>
+        current.map((org) =>
+          org.code === orgCode
+            ? {
+                ...org,
+                fullName: profile.organizationName || baseOrg?.fullName || org.fullName,
+                shortName:
+                  profile.organizationShortName || baseOrg?.shortName || org.shortName,
+                president: profile.presidentName || baseOrg?.president || org.president,
+                aboutText: profile.aboutText,
+              }
+            : org
+        )
+      );
+    },
+    []
+  );
 
   function handleAuthenticated(user: AuthUser) {
     if (user.role === 'cessca') {
@@ -144,7 +166,7 @@ function PortalShell() {
             onSelectOrg={(code) => navigate({ page: 'org', orgCode: code })}
             onOpenLogin={() => setLoginOpen(true)}
             onOpenLightbox={(imageUrl, caption) => setLightbox({ imageUrl, caption })}
-            onPostsMutated={() => void fetchOrgStats()}
+            onOrganizationProfileUpdated={handleOrganizationProfileUpdated}
           />
         )}
 
@@ -161,7 +183,6 @@ function PortalShell() {
             onSelectOrg={(code) => navigate({ page: 'org', orgCode: code })}
             onOpenLogin={() => setLoginOpen(true)}
             onOpenLightbox={(imageUrl, caption) => setLightbox({ imageUrl, caption })}
-            onReviewCompleted={() => void fetchOrgStats()}
           />
         )}
       </div>

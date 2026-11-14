@@ -177,12 +177,18 @@ async function initializeDatabases() {
             about_text TEXT,
             organization_name TEXT,
             organization_short_name TEXT,
+            president_name TEXT,
             updated_at TEXT NOT NULL
           )
         `);
         const profileColumns = await db.execute('PRAGMA table_info(organization_profile)');
         const existingColumns = new Set(profileColumns.rows.map((column) => String(column.name)));
-        for (const column of ['about_text', 'organization_name', 'organization_short_name']) {
+        for (const column of [
+          'about_text',
+          'organization_name',
+          'organization_short_name',
+          'president_name',
+        ]) {
           if (!existingColumns.has(column)) {
             await db.execute(`ALTER TABLE organization_profile ADD COLUMN ${column} TEXT`);
           }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Check, Heart, Share2, ShieldCheck, ImageOff } from 'lucide-react';
+import { Calendar, Check, Heart, Share2, ImageOff } from 'lucide-react';
 import { getOrgByCode } from '../config/org-config';
 import { resolvePostImageUrl } from '../lib/mediaAssets';
 import type { OrgPost } from '../types/portal';
@@ -8,9 +8,10 @@ import { OrgEmblem } from './OrgEmblem';
 interface FacebookPostCardProps {
   post: OrgPost;
   organizationImageUrl?: string | null;
+  showEngagementActions?: boolean;
   showOrgLink?: boolean;
   onOpenOrg?: (orgCode: string) => void;
-  onOpenLightbox?: (imageUrl: string, caption: string) => void;
+  onOpenLightbox: (imageUrl: string, caption: string) => void;
   onLikeUpdated?: (postId: string, likesCount: number) => void;
 }
 
@@ -37,6 +38,7 @@ function formatRelativeTime(iso: string): string {
 export function FacebookPostCard({
   post,
   organizationImageUrl,
+  showEngagementActions = true,
   showOrgLink = false,
   onOpenOrg,
   onOpenLightbox,
@@ -122,11 +124,6 @@ export function FacebookPostCard({
               <span>President {post.authorName}</span>
               <span aria-hidden="true">·</span>
               <span>Published {formatRelativeTime(post.reviewedAt || post.createdAt)}</span>
-              <span aria-hidden="true">·</span>
-              <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                CESSCA Approved
-              </span>
             </div>
           </div>
         </div>
@@ -151,7 +148,9 @@ export function FacebookPostCard({
         <div className="border-y border-stone-200 bg-stone-100">
           <button
             type="button"
-            onClick={() => onOpenLightbox?.(resolvedImg, post.title)}
+            onClick={() => onOpenLightbox(resolvedImg, post.title)}
+            aria-label={`View full-size image: ${post.title}`}
+            title="View full-size image"
             className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A8A] cursor-zoom-in"
           >
             <img
@@ -172,51 +171,53 @@ export function FacebookPostCard({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-stone-100 px-3 py-2.5 text-xs text-stone-600 sm:flex-nowrap sm:gap-4 sm:px-5 sm:py-3">
-        <div className="flex min-w-0 items-center gap-1 sm:gap-4">
-          <button
-            type="button"
-            onClick={() => void handleToggleLike()}
-            className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-medium transition-colors cursor-pointer sm:gap-1.5 sm:px-3 ${
-              liked
-                ? 'bg-[#1E3A8A]/10 text-[#1E3A8A]'
-                : 'text-stone-700 hover:bg-stone-100'
-            }`}
-          >
-            <Heart className={`w-4 h-4 ${liked ? 'fill-[#1E3A8A] text-[#1E3A8A]' : ''}`} />
-            <span className="tabular-nums">{likesCount}</span>
-            <span>{likesCount === 1 ? 'Like' : 'Likes'}</span>
-          </button>
+      {showEngagementActions && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-stone-100 px-3 py-2.5 text-xs text-stone-600 sm:flex-nowrap sm:gap-4 sm:px-5 sm:py-3">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-4">
+            <button
+              type="button"
+              onClick={() => void handleToggleLike()}
+              className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-medium transition-colors cursor-pointer sm:gap-1.5 sm:px-3 ${
+                liked
+                  ? 'bg-[#1E3A8A]/10 text-[#1E3A8A]'
+                  : 'text-stone-700 hover:bg-stone-100'
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${liked ? 'fill-[#1E3A8A] text-[#1E3A8A]' : ''}`} />
+              <span className="tabular-nums">{likesCount}</span>
+              <span>{likesCount === 1 ? 'Like' : 'Likes'}</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => void handleShare()}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-medium text-stone-700 transition-colors hover:bg-stone-100 cursor-pointer sm:gap-1.5 sm:px-3"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-700" />
-                <span className="text-emerald-700">Link Copied</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4" />
-                <span>Copy Page Link</span>
-              </>
-            )}
-          </button>
+            <button
+              type="button"
+              onClick={() => void handleShare()}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-medium text-stone-700 transition-colors hover:bg-stone-100 cursor-pointer sm:gap-1.5 sm:px-3"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-700" />
+                  <span className="text-emerald-700">Link Copied</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  <span>Copy Page Link</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {showOrgLink && onOpenOrg && (
+            <button
+              type="button"
+              onClick={() => onOpenOrg(post.orgCode)}
+              className="shrink-0 whitespace-nowrap text-[11px] font-medium text-[#1E3A8A] transition hover:underline cursor-pointer sm:text-xs"
+            >
+              Visit {post.orgShortName} Page →
+            </button>
+          )}
         </div>
-
-        {showOrgLink && onOpenOrg && (
-          <button
-            type="button"
-            onClick={() => onOpenOrg(post.orgCode)}
-            className="shrink-0 whitespace-nowrap text-[11px] font-medium text-[#1E3A8A] transition hover:underline cursor-pointer sm:text-xs"
-          >
-            Visit {post.orgShortName} Page →
-          </button>
-        )}
-      </div>
+      )}
     </article>
   );
 }

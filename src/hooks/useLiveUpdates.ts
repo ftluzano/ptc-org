@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
-
-const LIVE_UPDATE_INTERVAL_MS = 1000;
+import {
+  PORTAL_UPDATE_CHANNEL,
+  PORTAL_UPDATE_CLIENT_ID,
+  PORTAL_UPDATE_EVENT,
+} from '../lib/portalUpdates';
 
 export function useLiveUpdates(onUpdate: () => void | Promise<void>) {
   const onUpdateRef = useRef(onUpdate);
@@ -11,52 +14,39 @@ export function useLiveUpdates(onUpdate: () => void | Promise<void>) {
 
   useEffect(() => {
     let active = true;
-    let checking = false;
-    let lastVersion: number | null = null;
+    let refreshing = false;
 
-    async function checkForUpdates() {
-      if (!active || checking || document.visibilityState === 'hidden') return;
-      checking = true;
-      try {
-        const response = await fetch('/api/updates/version', { cache: 'no-store' });
-        if (!response.ok) {
-          throw new Error('The live update service could not be reached.');
-        }
-        const data = await response.json();
-        if (typeof data.version !== 'number' || !Number.isSafeInteger(data.version)) {
-          throw new Error('The live update service returned an invalid version.');
-        }
-        if (!active) return;
-
-        if (lastVersion !== null && data.version !== lastVersion) {
-          lastVersion = data.version;
-          await onUpdateRef.current();
-        } else {
-          lastVersion = data.version;
-        }
-      } catch (error) {
-        console.error('Live update check failed:', error);
-      } finally {
-        checking = false;
-      }
+    function refresh() {
+      if (!active || refreshing || document.visibilityState === 'hidden') return;
+      refreshing = true;
+      Promise.resolve(onUpdateRef.current())
+        .catch((error: unknown) => console.error('Live update refresh failed:', error))
+        .finally(() => {
+          refreshing = false;
+        });
     }
 
-    const intervalId = window.setInterval(() => {
-      void checkForUpdates();
-    }, LIVE_UPDATE_INTERVAL_MS);
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === 'visible') void checkForUpdates();
-    };
+    function refreshFromChannel(event: MessageEvent<{ source?: string }>) {
+      if (event.data?.source !== PORTAL_UPDATE_CLIENT_ID) refresh();
+    }
 
-    document.addEventListener('visibilitychange', refreshWhenVisible);
-    window.addEventListener('focus', refreshWhenVisible);
-    void checkForUpdates();
+    const channel =
+      typeof BroadcastChannel === 'undefined'
+        ? null
+        : new BroadcastChannel(PORTAL_UPDATE_CHANNEL);
+
+    window.addEventListener(PORTAL_UPDATE_EVENT, refresh);
+    channel?.addEventListener('message', refreshFromChannel);
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
 
     return () => {
       active = false;
-      window.clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', refreshWhenVisible);
-      window.removeEventListener('focus', refreshWhenVisible);
+      channel?.close();
+      window.removeEventListener(PORTAL_UPDATE_EVENT, refresh);
+      channel?.removeEventListener('message', refreshFromChannel);
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
     };
   }, []);
 }

@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import { CAMPUS_HERO_IMAGE, resolvePostImageUrl } from '../lib/mediaAssets';
+import { notifyPortalDataChanged } from '../lib/portalUpdates';
 import type { OrganizationProfile, OrgPost } from '../types/portal';
 import { FacebookPostCard } from './FacebookPostCard';
 import { OrgEmblem } from './OrgEmblem';
@@ -29,7 +30,7 @@ interface OrgProfilePageProps {
   onSelectOrg: (orgCode: string) => void;
   onOpenLogin: () => void;
   onOpenLightbox: (imageUrl: string, caption: string) => void;
-  onPostsMutated: () => void;
+  onOrganizationProfileUpdated: (orgCode: string, profile: OrganizationProfile) => void;
 }
 
 type OrgViewTab = 'feed' | 'profile' | 'compose' | 'submissions';
@@ -50,7 +51,7 @@ export function OrgProfilePage({
   onSelectOrg,
   onOpenLogin,
   onOpenLightbox,
-  onPostsMutated,
+  onOrganizationProfileUpdated,
 }: OrgProfilePageProps) {
   const { user, getAuthHeaders } = useAuth();
   const isOwningOfficer = user?.role === 'president' && user.orgCode === org.code;
@@ -66,16 +67,19 @@ export function OrgProfilePage({
     aboutText: '',
     organizationName: '',
     organizationShortName: '',
+    presidentName: '',
   });
   const [bannerDraft, setBannerDraft] = useState<string | null>(null);
   const [avatarDraft, setAvatarDraft] = useState<string | null>(null);
   const [aboutDraft, setAboutDraft] = useState('');
   const [organizationNameDraft, setOrganizationNameDraft] = useState('');
   const [organizationShortNameDraft, setOrganizationShortNameDraft] = useState('');
+  const [presidentNameDraft, setPresidentNameDraft] = useState('');
   const [bannerChanged, setBannerChanged] = useState(false);
   const [avatarChanged, setAvatarChanged] = useState(false);
   const [aboutChanged, setAboutChanged] = useState(false);
   const [organizationNameChanged, setOrganizationNameChanged] = useState(false);
+  const [presidentNameChanged, setPresidentNameChanged] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Composer state
@@ -94,6 +98,7 @@ export function OrgProfilePage({
     ...org,
     fullName: organizationProfile.organizationName || org.fullName,
     shortName: organizationProfile.organizationShortName || org.shortName,
+    president: organizationProfile.presidentName || org.president,
   };
 
   const loadOrganizationData = useCallback(async () => {
@@ -152,10 +157,12 @@ export function OrgProfilePage({
     setAboutDraft('');
     setOrganizationNameDraft('');
     setOrganizationShortNameDraft('');
+    setPresidentNameDraft('');
     setBannerChanged(false);
     setAvatarChanged(false);
     setAboutChanged(false);
     setOrganizationNameChanged(false);
+    setPresidentNameChanged(false);
     void loadOrganizationData();
   }, [loadOrganizationData]);
 
@@ -243,6 +250,7 @@ export function OrgProfilePage({
       { asset: 'banner', changed: bannerChanged, dataUrl: bannerDraft },
       { asset: 'avatar', changed: avatarChanged, dataUrl: avatarDraft },
     ];
+    let savedProfile: OrganizationProfile | null = null;
 
     try {
       for (const update of updates) {
@@ -260,7 +268,8 @@ export function OrgProfilePage({
           throw new Error(data.error || 'Failed to save organization profile image.');
         }
 
-        setOrganizationProfile(data.profile as OrganizationProfile);
+        savedProfile = data.profile as OrganizationProfile;
+        setOrganizationProfile(savedProfile);
         if (update.asset === 'banner') setBannerChanged(false);
         else setAvatarChanged(false);
       }
@@ -278,12 +287,13 @@ export function OrgProfilePage({
         if (!response.ok) {
           throw new Error(data.error || 'Failed to save organization About.');
         }
-        setOrganizationProfile(data.profile as OrganizationProfile);
+        savedProfile = data.profile as OrganizationProfile;
+        setOrganizationProfile(savedProfile);
         setAboutChanged(false);
         setAboutDraft('');
       }
 
-      if (organizationNameChanged) {
+      if (organizationNameChanged || presidentNameChanged) {
         const response = await fetch(`/api/organizations/${org.code}/profile/name`, {
           method: 'PUT',
           headers: {
@@ -293,21 +303,28 @@ export function OrgProfilePage({
           body: JSON.stringify({
             organizationName: organizationNameDraft,
             organizationShortName: organizationShortNameDraft,
+            presidentName: presidentNameDraft,
           }),
         });
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.error || 'Failed to save organization name.');
         }
-        setOrganizationProfile(data.profile as OrganizationProfile);
+        savedProfile = data.profile as OrganizationProfile;
+        setOrganizationProfile(savedProfile);
         setOrganizationNameChanged(false);
         setOrganizationNameDraft('');
         setOrganizationShortNameDraft('');
+        setPresidentNameChanged(false);
+        setPresidentNameDraft('');
       }
 
       setBannerDraft(null);
       setAvatarDraft(null);
-      onPostsMutated();
+      if (savedProfile) {
+        onOrganizationProfileUpdated(org.code, savedProfile);
+        notifyPortalDataChanged();
+      }
       setFormMessage({ type: 'success', text: 'Organization profile updated.' });
     } catch (error) {
       setFormMessage({
@@ -349,8 +366,8 @@ export function OrgProfilePage({
         type: 'success',
         text: `Submitted letter ${data.post.letterRef} to CESSCA for approval.`,
       });
+      notifyPortalDataChanged();
       await loadOrganizationData();
-      onPostsMutated();
       setActiveTab('submissions');
     } catch (err) {
       setFormMessage({
@@ -382,8 +399,8 @@ export function OrgProfilePage({
         type: 'success',
         text: isApproved ? 'Approved announcement deleted.' : 'Submission withdrawn.',
       });
+      notifyPortalDataChanged();
       await loadOrganizationData();
-      onPostsMutated();
     } catch (error) {
       setFormMessage({
         type: 'error',
@@ -461,7 +478,9 @@ export function OrgProfilePage({
                 onClick={() => {
                   setOrganizationNameDraft(displayOrg.fullName);
                   setOrganizationShortNameDraft(displayOrg.shortName);
+                  setPresidentNameDraft(displayOrg.president);
                   setOrganizationNameChanged(false);
+                  setPresidentNameChanged(false);
                   setActiveTab('profile');
                 }}
                 className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer sm:px-3.5 sm:text-xs ${
@@ -470,7 +489,7 @@ export function OrgProfilePage({
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
-                Edit About, Name & Images
+                Edit Organization Info
               </button>
               <button
                 type="button"
@@ -536,7 +555,7 @@ export function OrgProfilePage({
                 <User className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
                 <div>
                   <dt className="text-stone-400">Official President</dt>
-                  <dd className="font-medium text-stone-900">{org.president}</dd>
+                  <dd className="font-medium text-stone-900">                  {displayOrg.president}</dd>
                 </div>
               </div>
             </dl>
@@ -589,7 +608,7 @@ export function OrgProfilePage({
                   Edit Organization Profile
                 </h2>
                 <p className="mt-1 text-xs text-stone-500">
-                  Update your organization’s name, About text, and page images.
+                  Update your organization’s name, president, About text, and page images.
                 </p>
               </div>
 
@@ -632,6 +651,24 @@ export function OrgProfilePage({
                         event.target.value !== displayOrg.shortName ||
                           organizationNameDraft !== displayOrg.fullName
                       );
+                    }}
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="organization-president-name" className="block text-xs font-medium text-stone-700">
+                    President name
+                  </label>
+                  <input
+                    id="organization-president-name"
+                    type="text"
+                    required
+                    minLength={2}
+                    maxLength={100}
+                    value={presidentNameDraft}
+                    onChange={(event) => {
+                      setPresidentNameDraft(event.target.value);
+                      setPresidentNameChanged(event.target.value !== displayOrg.president);
                     }}
                     className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
                   />
@@ -747,10 +784,12 @@ export function OrgProfilePage({
                     setAboutDraft('');
                     setOrganizationNameDraft('');
                     setOrganizationShortNameDraft('');
+                    setPresidentNameDraft('');
                     setBannerChanged(false);
                     setAvatarChanged(false);
                     setAboutChanged(false);
                     setOrganizationNameChanged(false);
+                    setPresidentNameChanged(false);
                     setActiveTab('feed');
                   }}
                   className="cursor-pointer rounded-lg px-4 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-100"
@@ -764,7 +803,8 @@ export function OrgProfilePage({
                     (!bannerChanged &&
                       !avatarChanged &&
                       !aboutChanged &&
-                      !organizationNameChanged)
+                      !organizationNameChanged &&
+                      !presidentNameChanged)
                   }
                   className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1E3A8A] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#172E6E] disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -1012,6 +1052,7 @@ export function OrgProfilePage({
                       key={post.id}
                       post={post}
                       organizationImageUrl={organizationProfile.avatarDataUrl}
+                      showEngagementActions={false}
                       onOpenLightbox={onOpenLightbox}
                     />
                   ))}

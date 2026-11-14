@@ -169,6 +169,7 @@ function mapRowToOrganizationProfile(
     organizationShortName: row?.organization_short_name
       ? String(row.organization_short_name)
       : '',
+    presidentName: row?.president_name ? String(row.president_name) : '',
   };
 }
 
@@ -176,7 +177,7 @@ async function getOrganizationNames(orgCode: string) {
   const org = getOrgByCode(orgCode);
   if (!org) throw new Error(`Unknown organization code: ${orgCode}`);
   const result = await getOrgDb(org.code).execute(
-    'SELECT organization_name, organization_short_name FROM organization_profile WHERE id = 1'
+    'SELECT organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
   );
   const row = result.rows[0];
   return {
@@ -184,6 +185,7 @@ async function getOrganizationNames(orgCode: string) {
     shortName: row?.organization_short_name
       ? String(row.organization_short_name)
       : org.shortName,
+    presidentName: row?.president_name ? String(row.president_name) : org.president,
   };
 }
 
@@ -322,7 +324,8 @@ export async function createApiApp() {
               profile.updated_at,
               profile.about_text,
               profile.organization_name,
-              profile.organization_short_name
+              profile.organization_short_name,
+              profile.president_name
             FROM (SELECT 1) AS singleton
             LEFT JOIN organization_profile AS profile ON profile.id = 1
           `);
@@ -335,6 +338,7 @@ export async function createApiApp() {
             shortName: row?.organization_short_name
               ? String(row.organization_short_name)
               : org.shortName,
+            president: row?.president_name ? String(row.president_name) : org.president,
             aboutText: row?.about_text ? String(row.about_text) : '',
             approvedCount: Number(row?.approved_count ?? 0),
             pendingCount: Number(row?.pending_count ?? 0),
@@ -418,7 +422,7 @@ export async function createApiApp() {
 
       const db = getOrgDb(org.code);
       const result = await db.execute(
-        'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
+        'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
       );
       const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
       return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -492,7 +496,7 @@ export async function createApiApp() {
           });
           await incrementPortalLiveVersion();
           const result = await db.execute(
-            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
+            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
           );
           const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
           return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -501,42 +505,48 @@ export async function createApiApp() {
         if (asset === 'name') {
           const organizationName: unknown = req.body?.organizationName;
           const organizationShortName: unknown = req.body?.organizationShortName;
+          const presidentName: unknown = req.body?.presidentName;
           if (
             typeof organizationName !== 'string' ||
             typeof organizationShortName !== 'string' ||
+            typeof presidentName !== 'string' ||
             organizationName.trim().length < 2 ||
             organizationName.trim().length > 120 ||
             organizationShortName.trim().length < 2 ||
-            organizationShortName.trim().length > 40
+            organizationShortName.trim().length > 40 ||
+            presidentName.trim().length < 2 ||
+            presidentName.trim().length > 100
           ) {
             return res.status(400).json({
               error:
-                'Enter an organization name (2–120 characters) and short name (2–40 characters).',
+                'Enter an organization name (2–120 characters), short name (2–40 characters), and president name (2–100 characters).',
             });
           }
 
           const fullName = organizationName.trim();
           const shortName = organizationShortName.trim();
+          const currentPresidentName = presidentName.trim();
           const db = getOrgDb(org.code);
           await db.execute({
             sql: `INSERT INTO organization_profile (
-                    id, organization_name, organization_short_name, updated_at
-                  ) VALUES (1, ?, ?, ?)
+                    id, organization_name, organization_short_name, president_name, updated_at
+                  ) VALUES (1, ?, ?, ?, ?)
                   ON CONFLICT(id) DO UPDATE SET
                     organization_name = excluded.organization_name,
                     organization_short_name = excluded.organization_short_name,
+                    president_name = excluded.president_name,
                     updated_at = excluded.updated_at`,
-            args: [fullName, shortName, new Date().toISOString()],
+            args: [fullName, shortName, currentPresidentName, new Date().toISOString()],
           });
           await getCentralDb().execute({
             sql: `UPDATE cessca_queue
-                  SET org_full_name = ?, org_short_name = ?
+                  SET org_full_name = ?, org_short_name = ?, president_name = ?
                   WHERE org_code = ?`,
-            args: [fullName, shortName, org.code],
+            args: [fullName, shortName, currentPresidentName, org.code],
           });
           await incrementPortalLiveVersion();
           const profileResult = await db.execute(
-            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
+            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
           );
           const row = profileResult.rows[0] as unknown as Record<string, unknown> | undefined;
           return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -582,7 +592,7 @@ export async function createApiApp() {
         });
         await incrementPortalLiveVersion();
         const result = await db.execute(
-          'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
+          'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
         );
         const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
         return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -667,7 +677,7 @@ export async function createApiApp() {
         sql: `INSERT INTO posts (
           id, letter_ref, org_code, author_name, title, event_date, caption, image_url, status, feedback, likes_count, created_at, reviewed_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, 0, ?, NULL)`,
-        args: [id, letterRef, org.code, org.president, title, eventDate, caption, imageUrl, now],
+        args: [id, letterRef, org.code, names.presidentName, title, eventDate, caption, imageUrl, now],
       });
 
       // 2. Queue reference into the central CESSCA moderation database
@@ -682,7 +692,7 @@ export async function createApiApp() {
           org.code,
           names.shortName,
           names.fullName,
-          org.president,
+          names.presidentName,
           title,
           eventDate,
           caption,
@@ -699,7 +709,7 @@ export async function createApiApp() {
           orgCode: org.code,
           orgShortName: names.shortName,
           orgFullName: names.fullName,
-          authorName: org.president,
+          authorName: names.presidentName,
           title,
           eventDate,
           caption,
@@ -829,12 +839,12 @@ export async function createApiApp() {
       const id = String(req.params.id);
       const central = getCentralDb();
       const result = await central.execute({
-        sql: "SELECT org_code FROM cessca_queue WHERE id = ? AND status = 'pending' LIMIT 1",
+        sql: 'SELECT org_code FROM cessca_queue WHERE id = ? LIMIT 1',
         args: [id],
       });
       const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
       if (!row) {
-        return res.status(404).json({ error: 'Pending request not found.' });
+        return res.status(404).json({ error: 'Record not found.' });
       }
 
       const org = getOrgByCode(String(row.org_code));
@@ -844,19 +854,19 @@ export async function createApiApp() {
       }
 
       await getOrgDb(org.code).execute({
-        sql: "DELETE FROM posts WHERE id = ? AND status = 'pending'",
+        sql: 'DELETE FROM posts WHERE id = ?',
         args: [id],
       });
       await central.execute({
-        sql: "DELETE FROM cessca_queue WHERE id = ? AND status = 'pending'",
+        sql: 'DELETE FROM cessca_queue WHERE id = ?',
         args: [id],
       });
 
       await incrementPortalLiveVersion();
       return res.json({ ok: true });
     } catch (error) {
-      console.error('Failed to delete pending CESSCA request:', error);
-      return res.status(500).json({ error: 'Failed to delete pending request.' });
+      console.error('Failed to delete CESSCA record:', error);
+      return res.status(500).json({ error: 'Failed to delete the record.' });
     }
   });
 
@@ -887,6 +897,9 @@ export async function createApiApp() {
 
       if (existing.rows.length === 0) {
         return res.status(404).json({ error: 'Submission letter not found.' });
+      }
+      if (String(existing.rows[0].status) !== 'pending') {
+        return res.status(409).json({ error: 'This letter has already been reviewed.' });
       }
 
       const orgCode = String(existing.rows[0].org_code);

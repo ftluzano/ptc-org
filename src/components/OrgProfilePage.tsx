@@ -598,12 +598,8 @@ export function OrgProfilePage({
               ) : posts.length === 0 ? (
                 <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-7 text-center">
                   <h3 className="font-display text-xl font-semibold text-stone-900">
-                    No approved announcements yet
+                    No announcements yet
                   </h3>
-                  <p className="text-sm text-stone-600 max-w-md mx-auto">
-                    {org.shortName} has not published any CESSCA-cleared bulletins yet. Check back
-                    soon or browse other student organizations.
-                  </p>
                   {isOwningOfficer && (
                     <button
                       type="button"

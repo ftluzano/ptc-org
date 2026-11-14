@@ -164,6 +164,26 @@ function mapRowToOrganizationProfile(
   return {
     bannerDataUrl: row?.banner_data_url ? String(row.banner_data_url) : null,
     avatarDataUrl: row?.avatar_data_url ? String(row.avatar_data_url) : null,
+    aboutText: row?.about_text ? String(row.about_text) : '',
+    organizationName: row?.organization_name ? String(row.organization_name) : '',
+    organizationShortName: row?.organization_short_name
+      ? String(row.organization_short_name)
+      : '',
+  };
+}
+
+async function getOrganizationNames(orgCode: string) {
+  const org = getOrgByCode(orgCode);
+  if (!org) throw new Error(`Unknown organization code: ${orgCode}`);
+  const result = await getOrgDb(org.code).execute(
+    'SELECT organization_name, organization_short_name FROM organization_profile WHERE id = 1'
+  );
+  const row = result.rows[0];
+  return {
+    fullName: row?.organization_name ? String(row.organization_name) : org.fullName,
+    shortName: row?.organization_short_name
+      ? String(row.organization_short_name)
+      : org.shortName,
   };
 }
 
@@ -173,14 +193,18 @@ async function incrementPortalLiveVersion() {
   );
 }
 
-function mapRowToOrgPost(row: Record<string, unknown>, orgCode: string): OrgPost {
+function mapRowToOrgPost(
+  row: Record<string, unknown>,
+  orgCode: string,
+  names?: { fullName: string; shortName: string }
+): OrgPost {
   const org = getOrgByCode(orgCode);
   return {
     id: String(row.id),
     letterRef: String(row.letter_ref),
     orgCode: String(row.org_code),
-    orgShortName: org?.shortName ?? orgCode.toUpperCase(),
-    orgFullName: org?.fullName ?? orgCode.toUpperCase(),
+    orgShortName: names?.shortName ?? org?.shortName ?? orgCode.toUpperCase(),
+    orgFullName: names?.fullName ?? org?.fullName ?? orgCode.toUpperCase(),
     authorName: String(row.author_name),
     title: String(row.title),
     eventDate: String(row.event_date),
@@ -296,11 +320,17 @@ export async function createApiApp() {
             "SELECT COUNT(*) as cnt FROM posts WHERE status = 'pending'"
           );
           const profileRes = await db.execute(
-            'SELECT avatar_data_url, updated_at FROM organization_profile WHERE id = 1'
+            'SELECT avatar_data_url, updated_at, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
           );
           const profileRow = profileRes.rows[0];
           return {
             ...org,
+            fullName: profileRow?.organization_name
+              ? String(profileRow.organization_name)
+              : org.fullName,
+            shortName: profileRow?.organization_short_name
+              ? String(profileRow.organization_short_name)
+              : org.shortName,
             approvedCount: Number(approvedRes.rows[0]?.cnt ?? 0),
             pendingCount: Number(pendingRes.rows[0]?.cnt ?? 0),
             latestPostAt: approvedRes.rows[0]?.latest ? String(approvedRes.rows[0].latest) : null,
@@ -333,8 +363,11 @@ export async function createApiApp() {
         const result = await db.execute(
           "SELECT * FROM posts WHERE status = 'approved' ORDER BY created_at DESC"
         );
+        const names = await getOrganizationNames(org.code);
         for (const row of result.rows) {
-          allPosts.push(mapRowToOrgPost(row as unknown as Record<string, unknown>, org.code));
+          allPosts.push(
+            mapRowToOrgPost(row as unknown as Record<string, unknown>, org.code, names)
+          );
         }
       }
 
@@ -357,10 +390,14 @@ export async function createApiApp() {
       const result = await db.execute(
         "SELECT * FROM posts WHERE status = 'approved' ORDER BY created_at DESC"
       );
+      const names = await getOrganizationNames(org.code);
       const posts = result.rows.map((row) =>
-        mapRowToOrgPost(row as unknown as Record<string, unknown>, org.code)
+        mapRowToOrgPost(row as unknown as Record<string, unknown>, org.code, names)
       );
-      return res.json({ organization: org, posts });
+      return res.json({
+        organization: { ...org, fullName: names.fullName, shortName: names.shortName },
+        posts,
+      });
     } catch (error) {
       console.error('Failed to load organization posts:', error);
       return res.status(500).json({ error: 'Failed to load organization posts.' });
@@ -376,7 +413,7 @@ export async function createApiApp() {
 
       const db = getOrgDb(org.code);
       const result = await db.execute(
-        'SELECT banner_data_url, avatar_data_url FROM organization_profile WHERE id = 1'
+        'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
       );
       const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
       return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -433,6 +470,73 @@ export async function createApiApp() {
         }
 
         const asset = String(req.params.asset);
+        if (asset === 'about') {
+          const aboutText: unknown = req.body?.aboutText;
+          if (typeof aboutText !== 'string' || aboutText.length > 2000) {
+            return res.status(400).json({ error: 'About must be text with a maximum of 2000 characters.' });
+          }
+
+          const db = getOrgDb(org.code);
+          await db.execute({
+            sql: `INSERT INTO organization_profile (id, about_text, updated_at)
+                  VALUES (1, ?, ?)
+                  ON CONFLICT(id) DO UPDATE SET
+                    about_text = excluded.about_text,
+                    updated_at = excluded.updated_at`,
+            args: [aboutText.trim(), new Date().toISOString()],
+          });
+          await incrementPortalLiveVersion();
+          const result = await db.execute(
+            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
+          );
+          const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
+          return res.json({ profile: mapRowToOrganizationProfile(row) });
+        }
+
+        if (asset === 'name') {
+          const organizationName: unknown = req.body?.organizationName;
+          const organizationShortName: unknown = req.body?.organizationShortName;
+          if (
+            typeof organizationName !== 'string' ||
+            typeof organizationShortName !== 'string' ||
+            organizationName.trim().length < 2 ||
+            organizationName.trim().length > 120 ||
+            organizationShortName.trim().length < 2 ||
+            organizationShortName.trim().length > 40
+          ) {
+            return res.status(400).json({
+              error:
+                'Enter an organization name (2–120 characters) and short name (2–40 characters).',
+            });
+          }
+
+          const fullName = organizationName.trim();
+          const shortName = organizationShortName.trim();
+          const db = getOrgDb(org.code);
+          await db.execute({
+            sql: `INSERT INTO organization_profile (
+                    id, organization_name, organization_short_name, updated_at
+                  ) VALUES (1, ?, ?, ?)
+                  ON CONFLICT(id) DO UPDATE SET
+                    organization_name = excluded.organization_name,
+                    organization_short_name = excluded.organization_short_name,
+                    updated_at = excluded.updated_at`,
+            args: [fullName, shortName, new Date().toISOString()],
+          });
+          await getCentralDb().execute({
+            sql: `UPDATE cessca_queue
+                  SET org_full_name = ?, org_short_name = ?
+                  WHERE org_code = ?`,
+            args: [fullName, shortName, org.code],
+          });
+          await incrementPortalLiveVersion();
+          const profileResult = await db.execute(
+            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
+          );
+          const row = profileResult.rows[0] as unknown as Record<string, unknown> | undefined;
+          return res.json({ profile: mapRowToOrganizationProfile(row) });
+        }
+
         const column =
           asset === 'banner'
             ? 'banner_data_url'
@@ -473,7 +577,7 @@ export async function createApiApp() {
         });
         await incrementPortalLiveVersion();
         const result = await db.execute(
-          'SELECT banner_data_url, avatar_data_url FROM organization_profile WHERE id = 1'
+          'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
         );
         const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
         return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -503,8 +607,9 @@ export async function createApiApp() {
 
       const db = getOrgDb(org.code);
       const result = await db.execute('SELECT * FROM posts ORDER BY created_at DESC');
+      const names = await getOrganizationNames(org.code);
       const submissions = result.rows.map((row) =>
-        mapRowToOrgPost(row as unknown as Record<string, unknown>, org.code)
+        mapRowToOrgPost(row as unknown as Record<string, unknown>, org.code, names)
       );
       return res.json({ submissions });
     } catch (error) {
@@ -549,6 +654,7 @@ export async function createApiApp() {
       const randomNum = Math.floor(1000 + Math.random() * 9000);
       const letterRef = `LTR-2026-${randomNum}`;
       const now = new Date().toISOString();
+      const names = await getOrganizationNames(org.code);
 
       // 1. Save into the organization's dedicated libSQL database with status: 'pending'
       const orgDb = getOrgDb(org.code);
@@ -569,8 +675,8 @@ export async function createApiApp() {
           id,
           letterRef,
           org.code,
-          org.shortName,
-          org.fullName,
+          names.shortName,
+          names.fullName,
           org.president,
           title,
           eventDate,
@@ -586,8 +692,8 @@ export async function createApiApp() {
           id,
           letterRef,
           orgCode: org.code,
-          orgShortName: org.shortName,
-          orgFullName: org.fullName,
+          orgShortName: names.shortName,
+          orgFullName: names.fullName,
           authorName: org.president,
           title,
           eventDate,
@@ -606,7 +712,7 @@ export async function createApiApp() {
     }
   });
 
-  // Officer-only: Withdraw/delete a pending or rejected post
+  // Organization officers may withdraw submissions or remove their approved announcements.
   app.delete('/api/organizations/:code/posts/:postId', async (req: AuthenticatedRequest, res: Response) => {
     try {
       const org = getOrgByCode(String(req.params.code));
@@ -614,14 +720,33 @@ export async function createApiApp() {
         return res.status(404).json({ error: 'Organization not found.' });
       }
       const user = req.authUser;
-      if (!user || (user.role !== 'cessca' && (user.role !== 'president' || user.orgCode !== org.code))) {
-        return res.status(403).json({ error: 'Unauthorized to remove this submission.' });
+      if (!user || user.role !== 'president' || user.orgCode !== org.code) {
+        return res.status(403).json({ error: 'Only this organization’s officer can remove its announcements.' });
       }
 
       const postId = String(req.params.postId);
       const orgDb = getOrgDb(org.code);
-      await orgDb.execute({ sql: 'DELETE FROM posts WHERE id = ?', args: [postId] });
+      const existing = await orgDb.execute({
+        sql: 'SELECT status FROM posts WHERE id = ? LIMIT 1',
+        args: [postId],
+      });
+      const existingPost = existing.rows[0];
+      if (!existingPost) {
+        return res.status(404).json({ error: 'Announcement not found.' });
+      }
 
+      const status = String(existingPost.status);
+      if (!['pending', 'rejected', 'approved'].includes(status)) {
+        return res.status(409).json({ error: 'This announcement cannot be removed.' });
+      }
+
+      const deletion = await orgDb.execute({
+        sql: 'DELETE FROM posts WHERE id = ? AND status = ?',
+        args: [postId, status],
+      });
+      if (deletion.rowsAffected === 0) {
+        return res.status(409).json({ error: 'The announcement changed before it could be removed.' });
+      }
       const centralDb = getCentralDb();
       await centralDb.execute({ sql: 'DELETE FROM cessca_queue WHERE id = ?', args: [postId] });
 

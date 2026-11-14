@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-const LIVE_UPDATE_INTERVAL_MS = 3000;
+const LIVE_UPDATE_INTERVAL_MS = 1000;
 
 export function useLiveUpdates(onUpdate: () => void | Promise<void>) {
   const onUpdateRef = useRef(onUpdate);

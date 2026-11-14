@@ -12,7 +12,6 @@ import {
   XCircle,
 } from 'lucide-react';
 import {
-  ORGANIZATIONS,
   getOrgByCode,
   type OrganizationConfig,
 } from '../config/org-config';
@@ -25,6 +24,7 @@ import { OrgEmblem } from './OrgEmblem';
 
 interface OrgProfilePageProps {
   org: OrganizationConfig;
+  organizations: OrganizationConfig[];
   onBackToDirectory: () => void;
   onSelectOrg: (orgCode: string) => void;
   onOpenLogin: () => void;
@@ -45,6 +45,7 @@ function readImageAsDataUrl(file: File): Promise<string> {
 
 export function OrgProfilePage({
   org,
+  organizations,
   onBackToDirectory,
   onSelectOrg,
   onOpenLogin,
@@ -62,11 +63,19 @@ export function OrgProfilePage({
   const [organizationProfile, setOrganizationProfile] = useState<OrganizationProfile>({
     bannerDataUrl: null,
     avatarDataUrl: null,
+    aboutText: '',
+    organizationName: '',
+    organizationShortName: '',
   });
   const [bannerDraft, setBannerDraft] = useState<string | null>(null);
   const [avatarDraft, setAvatarDraft] = useState<string | null>(null);
+  const [aboutDraft, setAboutDraft] = useState('');
+  const [organizationNameDraft, setOrganizationNameDraft] = useState('');
+  const [organizationShortNameDraft, setOrganizationShortNameDraft] = useState('');
   const [bannerChanged, setBannerChanged] = useState(false);
   const [avatarChanged, setAvatarChanged] = useState(false);
+  const [aboutChanged, setAboutChanged] = useState(false);
+  const [organizationNameChanged, setOrganizationNameChanged] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Composer state
@@ -77,9 +86,15 @@ export function OrgProfilePage({
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   );
+  const displayOrg = {
+    ...org,
+    fullName: organizationProfile.organizationName || org.fullName,
+    shortName: organizationProfile.organizationShortName || org.shortName,
+  };
 
   const loadOrganizationData = useCallback(async () => {
     setLoadingPosts(true);
@@ -127,8 +142,13 @@ export function OrgProfilePage({
     setFormMessage(null);
     setBannerDraft(null);
     setAvatarDraft(null);
+    setAboutDraft('');
+    setOrganizationNameDraft('');
+    setOrganizationShortNameDraft('');
     setBannerChanged(false);
     setAvatarChanged(false);
+    setAboutChanged(false);
+    setOrganizationNameChanged(false);
     void loadOrganizationData();
   }, [loadOrganizationData]);
 
@@ -238,9 +258,50 @@ export function OrgProfilePage({
         else setAvatarChanged(false);
       }
 
+      if (aboutChanged) {
+        const response = await fetch(`/api/organizations/${org.code}/profile/about`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ aboutText: aboutDraft }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save organization About.');
+        }
+        setOrganizationProfile(data.profile as OrganizationProfile);
+        setAboutChanged(false);
+        setAboutDraft('');
+      }
+
+      if (organizationNameChanged) {
+        const response = await fetch(`/api/organizations/${org.code}/profile/name`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({
+            organizationName: organizationNameDraft,
+            organizationShortName: organizationShortNameDraft,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save organization name.');
+        }
+        setOrganizationProfile(data.profile as OrganizationProfile);
+        setOrganizationNameChanged(false);
+        setOrganizationNameDraft('');
+        setOrganizationShortNameDraft('');
+        onPostsMutated();
+      }
+
       setBannerDraft(null);
       setAvatarDraft(null);
-      setFormMessage({ type: 'success', text: 'Organization profile images saved.' });
+      setFormMessage({ type: 'success', text: 'Organization profile updated.' });
     } catch (error) {
       setFormMessage({
         type: 'error',
@@ -294,18 +355,35 @@ export function OrgProfilePage({
     }
   }
 
-  async function handleWithdrawSubmission(postId: string) {
+  async function handleDeleteSubmission(item: OrgPost) {
+    const isApproved = item.status === 'approved';
+    const action = isApproved ? 'delete this approved announcement' : 'withdraw this submission';
+    if (!window.confirm(`Are you sure you want to ${action}? This cannot be undone.`)) return;
+
+    setFormMessage(null);
+    setDeletingPostId(item.id);
     try {
-      const res = await fetch(`/api/organizations/${org.code}/posts/${postId}`, {
+      const res = await fetch(`/api/organizations/${org.code}/posts/${encodeURIComponent(item.id)}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
-      if (res.ok) {
-        await loadOrganizationData();
-        onPostsMutated();
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Unable to remove this announcement.');
       }
-    } catch {
-      // Ignore error
+      setFormMessage({
+        type: 'success',
+        text: isApproved ? 'Approved announcement deleted.' : 'Submission withdrawn.',
+      });
+      await loadOrganizationData();
+      onPostsMutated();
+    } catch (error) {
+      setFormMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Unable to remove this announcement.',
+      });
+    } finally {
+      setDeletingPostId(null);
     }
   }
 
@@ -328,15 +406,9 @@ export function OrgProfilePage({
         <div className="relative h-28 overflow-hidden bg-stone-200 sm:h-44">
           <img
             src={organizationProfile.bannerDataUrl || CAMPUS_HERO_IMAGE}
-            alt={`${org.fullName} cover`}
+            alt={`${displayOrg.fullName} cover`}
             referrerPolicy="no-referrer"
             className="h-full w-full object-cover"
-          />
-          <div
-            className="absolute inset-0 opacity-80"
-            style={{
-              background: `linear-gradient(120deg, ${org.accentColor} 0%, rgba(17,24,39,0.55) 100%)`,
-            }}
           />
         </div>
 
@@ -344,11 +416,11 @@ export function OrgProfilePage({
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start sm:gap-4">
             <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
               <div className="-mt-8 shrink-0 sm:-mt-8">
-                <OrgEmblem org={org} size="lg" imageUrl={organizationProfile.avatarDataUrl} />
+                <OrgEmblem org={displayOrg} size="lg" imageUrl={organizationProfile.avatarDataUrl} />
               </div>
               <div className="min-w-0 flex-1 pt-1">
                 <h1 className="break-words font-display text-lg font-semibold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
-                  {org.shortName} — {org.fullName}
+                  {displayOrg.shortName} — {displayOrg.fullName}
                 </h1>
               </div>
             </div>
@@ -360,7 +432,7 @@ export function OrgProfilePage({
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#172554] px-4 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(23,37,84,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1b2d66] sm:w-auto sm:shrink-0"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Submit Event Letter</span>
+                <span>Write Event Letter</span>
               </button>
             ) : !user ? (
               <button
@@ -388,14 +460,19 @@ export function OrgProfilePage({
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('profile')}
+                onClick={() => {
+                  setOrganizationNameDraft(displayOrg.fullName);
+                  setOrganizationShortNameDraft(displayOrg.shortName);
+                  setOrganizationNameChanged(false);
+                  setActiveTab('profile');
+                }}
                 className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer sm:px-3.5 sm:text-xs ${
                   activeTab === 'profile'
                     ? 'bg-[#1E3A8A] text-white'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
-                Edit Page Images
+                Edit About, Name & Images
               </button>
               <button
                 type="button"
@@ -406,7 +483,7 @@ export function OrgProfilePage({
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
-                Draft Event Letter
+                Compose Letter
               </button>
               <button
                 type="button"
@@ -450,9 +527,11 @@ export function OrgProfilePage({
         <aside className="space-y-3 sm:space-y-4 lg:col-span-4">
           <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-3.5 sm:p-4">
             <h2 className="font-display text-lg font-semibold text-stone-900">
-              About {org.shortName}
+              About {displayOrg.shortName}
             </h2>
-            <p className="text-sm text-stone-600 leading-relaxed">{org.mission}</p>
+            <p className="text-sm text-stone-600 leading-relaxed">
+              {organizationProfile.aboutText || org.mission}
+            </p>
 
             <dl className="pt-3 border-t border-stone-100 space-y-2.5 text-xs">
               <div className="flex items-start gap-2.5">
@@ -470,7 +549,7 @@ export function OrgProfilePage({
               All 12 PTC Organizations
             </h3>
             <div className="grid grid-cols-2 gap-1.5">
-              {ORGANIZATIONS.map((item) => (
+              {organizations.map((item) => (
                 <button
                   key={item.code}
                   type="button"
@@ -509,12 +588,84 @@ export function OrgProfilePage({
             >
               <div>
                 <h2 className="font-display text-xl font-semibold text-stone-900">
-                  Organization Page Images
+                  Edit Organization Profile
                 </h2>
                 <p className="mt-1 text-xs text-stone-500">
-                  Upload original-quality PNG, JPEG, or WebP images up to 5 MB each. Images are stored
-                  as Base64 in {org.shortName}&apos;s own Turso database.
+                  Update your organization’s name, About text, and page images.
                 </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label htmlFor="organization-name" className="block text-xs font-medium text-stone-700">
+                    Organization name
+                  </label>
+                  <input
+                    id="organization-name"
+                    type="text"
+                    required
+                    minLength={2}
+                    maxLength={120}
+                    value={organizationNameDraft}
+                    onChange={(event) => {
+                      setOrganizationNameDraft(event.target.value);
+                      setOrganizationNameChanged(
+                        event.target.value !== displayOrg.fullName ||
+                          organizationShortNameDraft !== displayOrg.shortName
+                      );
+                    }}
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="organization-short-name" className="block text-xs font-medium text-stone-700">
+                    Short name
+                  </label>
+                  <input
+                    id="organization-short-name"
+                    type="text"
+                    required
+                    minLength={2}
+                    maxLength={40}
+                    value={organizationShortNameDraft}
+                    onChange={(event) => {
+                      setOrganizationShortNameDraft(event.target.value);
+                      setOrganizationNameChanged(
+                        event.target.value !== displayOrg.shortName ||
+                          organizationNameDraft !== displayOrg.fullName
+                      );
+                    }}
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="organization-about" className="block text-xs font-medium text-stone-700">
+                  About
+                </label>
+                <textarea
+                  id="organization-about"
+                  rows={4}
+                  maxLength={2000}
+                  value={
+                    aboutChanged
+                      ? aboutDraft
+                      : organizationProfile.aboutText || org.mission
+                  }
+                  onChange={(event) => {
+                    setAboutDraft(event.target.value);
+                    setAboutChanged(
+                      event.target.value !== (organizationProfile.aboutText || org.mission)
+                    );
+                  }}
+                  placeholder="Describe your organization and its mission..."
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm leading-relaxed text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
+                />
+                <div className="text-right text-[11px] text-stone-400">
+                  {aboutChanged ? aboutDraft.length : (organizationProfile.aboutText || org.mission).length}
+                  /2000
+                </div>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
@@ -527,7 +678,7 @@ export function OrgProfilePage({
                           ? bannerDraft || CAMPUS_HERO_IMAGE
                           : organizationProfile.bannerDataUrl || CAMPUS_HERO_IMAGE
                       }
-                      alt={`${org.fullName} banner preview`}
+                      alt={`${displayOrg.fullName} banner preview`}
                       className="h-36 w-full object-cover"
                     />
                   </div>
@@ -559,7 +710,7 @@ export function OrgProfilePage({
                   <label className="block text-xs font-medium text-stone-700">Profile image</label>
                   <div className="flex h-36 items-center justify-center rounded-lg border border-stone-200 bg-stone-50">
                     <OrgEmblem
-                      org={org}
+                      org={displayOrg}
                       size="lg"
                       imageUrl={avatarChanged ? avatarDraft : organizationProfile.avatarDataUrl}
                     />
@@ -595,8 +746,13 @@ export function OrgProfilePage({
                   onClick={() => {
                     setBannerDraft(null);
                     setAvatarDraft(null);
+                    setAboutDraft('');
+                    setOrganizationNameDraft('');
+                    setOrganizationShortNameDraft('');
                     setBannerChanged(false);
                     setAvatarChanged(false);
+                    setAboutChanged(false);
+                    setOrganizationNameChanged(false);
                     setActiveTab('feed');
                   }}
                   className="cursor-pointer rounded-lg px-4 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-100"
@@ -605,11 +761,17 @@ export function OrgProfilePage({
                 </button>
                 <button
                   type="submit"
-                  disabled={savingProfile || (!bannerChanged && !avatarChanged)}
+                  disabled={
+                    savingProfile ||
+                    (!bannerChanged &&
+                      !avatarChanged &&
+                      !aboutChanged &&
+                      !organizationNameChanged)
+                  }
                   className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1E3A8A] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#172E6E] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Save className="h-3.5 w-3.5" />
-                  {savingProfile ? 'Saving...' : 'Save Profile Images'}
+                  {savingProfile ? 'Saving...' : 'Save Profile'}
                 </button>
               </div>
             </form>
@@ -622,10 +784,10 @@ export function OrgProfilePage({
             >
               <div>
                 <h2 className="font-display text-xl font-semibold text-stone-900">
-                  Submit Event Announcement Letter
+                  Compose Event Announcement Letter
                 </h2>
                 <p className="text-xs text-stone-500 mt-1">
-                  Your submission is stored in {org.shortName}&apos;s isolated database as pending and
+                  Your submission is stored in {displayOrg.shortName}&apos;s isolated database as pending and
                   routed to CESSCA for official clearance.
                 </p>
               </div>
@@ -811,18 +973,23 @@ export function OrgProfilePage({
                         </div>
                       )}
 
-                      {item.status !== 'approved' && (
-                        <div className="pt-2 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => void handleWithdrawSubmission(item.id)}
-                            className="inline-flex items-center gap-1.5 text-xs font-medium text-red-700 hover:underline cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Withdraw Submission</span>
-                          </button>
-                        </div>
-                      )}
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          type="button"
+                          disabled={deletingPostId !== null}
+                          onClick={() => void handleDeleteSubmission(item)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-red-700 hover:underline disabled:opacity-50 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>
+                            {deletingPostId === item.id
+                              ? 'Deleting...'
+                              : item.status === 'approved'
+                                ? 'Delete Announcement'
+                                : 'Withdraw Submission'}
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   );
                 })

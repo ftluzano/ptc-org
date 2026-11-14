@@ -13,6 +13,9 @@ export interface AuthUser {
 export interface OrganizationProfile {
   bannerDataUrl: string | null;
   avatarDataUrl: string | null;
+  aboutText: string;
+  organizationName: string;
+  organizationShortName: string;
 }
 
 export interface OrgPost {

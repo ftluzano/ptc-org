@@ -52,11 +52,7 @@ export function OrgDirectoryPage({
         />
         <div className="relative z-10 flex min-h-[340px] items-center px-5 py-8 sm:min-h-[440px] sm:px-10 sm:py-10 lg:min-h-[480px] lg:px-14">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-blue-50 backdrop-blur-sm sm:px-3 sm:text-xs sm:tracking-[0.18em]">
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-              Pateros Technological College · Student Life
-            </div>
-            <h1 className="mt-4 font-display text-3xl font-semibold leading-[1.08] tracking-tight text-white sm:mt-5 sm:text-5xl lg:text-6xl">
+            <h1 className="font-display text-3xl font-semibold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
               Find your people.
               <span className="mt-1 block text-blue-100">Shape your campus.</span>
             </h1>

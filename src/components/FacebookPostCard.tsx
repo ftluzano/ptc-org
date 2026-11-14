@@ -42,11 +42,14 @@ export function FacebookPostCard({
   onOpenLightbox,
   onLikeUpdated,
 }: FacebookPostCardProps) {
-  const org = getOrgByCode(post.orgCode) ?? {
-    code: post.orgCode,
-    shortName: post.orgShortName,
-    accentColor: '#1E3A8A',
-  };
+  const configuredOrg = getOrgByCode(post.orgCode);
+  const org = configuredOrg
+    ? { ...configuredOrg, shortName: post.orgShortName, fullName: post.orgFullName }
+    : {
+        code: post.orgCode,
+        shortName: post.orgShortName,
+        accentColor: '#1E3A8A',
+      };
   const resolvedImg = resolvePostImageUrl(post.imageUrl);
   const [imgError, setImgError] = useState(false);
   const [liked, setLiked] = useState(false);

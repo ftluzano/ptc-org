@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import { ORGANIZATIONS, getOrgByCode } from './config/org-config';
+import { ORGANIZATIONS, getOrgByCode, type OrganizationConfig } from './config/org-config';
 import { AuthProvider } from './hooks/useAuth';
 import { useLiveUpdates } from './hooks/useLiveUpdates';
 import type { AuthUser, OrgStats } from './types/portal';
@@ -44,6 +44,7 @@ function routeToPath(route: ActiveRoute): string {
 
 function PortalShell() {
   const [route, setRoute] = useState<ActiveRoute>(() => parseRouteFromLocation());
+  const [organizations, setOrganizations] = useState<OrganizationConfig[]>(ORGANIZATIONS);
   const [statsByCode, setStatsByCode] = useState<Record<string, OrgStats>>({});
   const [loadingOrgs, setLoadingOrgs] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -75,6 +76,17 @@ function PortalShell() {
       if (res.ok) {
         const data = await res.json();
         const map: Record<string, OrgStats> = {};
+        const returnedOrganizations = new Map<string, OrganizationConfig>(
+          (data.organizations ?? []).map((org: OrganizationConfig) => [org.code, org])
+        );
+        setOrganizations(
+          ORGANIZATIONS.map((org) => {
+            const updated = returnedOrganizations.get(org.code);
+            return updated
+              ? { ...org, shortName: updated.shortName, fullName: updated.fullName }
+              : org;
+          })
+        );
         for (const org of data.organizations ?? []) {
           map[org.code] = {
             orgCode: org.code,
@@ -118,7 +130,7 @@ function PortalShell() {
       <div className="flex-1">
         {route.page === 'directory' && (
           <OrgDirectoryPage
-            organizations={ORGANIZATIONS}
+            organizations={organizations}
             statsByCode={statsByCode}
             loading={loadingOrgs}
             onSelectOrg={(code) => navigate({ page: 'org', orgCode: code })}
@@ -128,6 +140,7 @@ function PortalShell() {
         {route.page === 'org' && activeOrg && (
           <OrgProfilePage
             org={activeOrg}
+            organizations={organizations}
             onBackToDirectory={() => navigate({ page: 'directory' })}
             onSelectOrg={(code) => navigate({ page: 'org', orgCode: code })}
             onOpenLogin={() => setLoginOpen(true)}

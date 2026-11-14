@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock,
   ImagePlus,
+  Save,
   Send,
   Trash2,
   User,
@@ -17,7 +18,7 @@ import {
 } from '../config/org-config';
 import { useAuth } from '../hooks/useAuth';
 import { CAMPUS_HERO_IMAGE, resolvePostImageUrl } from '../lib/mediaAssets';
-import type { OrgPost } from '../types/portal';
+import type { OrganizationProfile, OrgPost } from '../types/portal';
 import { FacebookPostCard } from './FacebookPostCard';
 import { OrgEmblem } from './OrgEmblem';
 
@@ -30,7 +31,16 @@ interface OrgProfilePageProps {
   onPostsMutated: () => void;
 }
 
-type OrgViewTab = 'feed' | 'compose' | 'submissions';
+type OrgViewTab = 'feed' | 'profile' | 'compose' | 'submissions';
+
+function readImageAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('Could not read file.'));
+    reader.readAsDataURL(file);
+  });
+}
 
 export function OrgProfilePage({
   org,
@@ -48,6 +58,15 @@ export function OrgProfilePage({
   const [posts, setPosts] = useState<OrgPost[]>([]);
   const [submissions, setSubmissions] = useState<OrgPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  const [organizationProfile, setOrganizationProfile] = useState<OrganizationProfile>({
+    bannerDataUrl: null,
+    avatarDataUrl: null,
+  });
+  const [bannerDraft, setBannerDraft] = useState<string | null>(null);
+  const [avatarDraft, setAvatarDraft] = useState<string | null>(null);
+  const [bannerChanged, setBannerChanged] = useState(false);
+  const [avatarChanged, setAvatarChanged] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Composer state
   const [title, setTitle] = useState('');
@@ -64,11 +83,19 @@ export function OrgProfilePage({
   const loadOrganizationData = useCallback(async () => {
     setLoadingPosts(true);
     try {
-      const publicRes = await fetch(`/api/organizations/${org.code}/posts`);
+      const [publicRes, profileRes] = await Promise.all([
+        fetch(`/api/organizations/${org.code}/posts`),
+        fetch(`/api/organizations/${org.code}/profile`),
+      ]);
       if (publicRes.ok) {
         const data = await publicRes.json();
         setPosts(data.posts ?? []);
       }
+      if (!profileRes.ok) {
+        throw new Error('Unable to load this organization’s profile images.');
+      }
+      const profileData = await profileRes.json();
+      setOrganizationProfile(profileData.profile);
 
       if (isOwningOfficer || user?.role === 'cessca') {
         const subRes = await fetch(`/api/organizations/${org.code}/submissions`, {
@@ -81,8 +108,12 @@ export function OrgProfilePage({
       } else {
         setSubmissions([]);
       }
-    } catch {
+    } catch (error) {
       setPosts([]);
+      setFormMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Unable to load organization data.',
+      });
     } finally {
       setLoadingPosts(false);
     }
@@ -91,6 +122,10 @@ export function OrgProfilePage({
   useEffect(() => {
     setActiveTab('feed');
     setFormMessage(null);
+    setBannerDraft(null);
+    setAvatarDraft(null);
+    setBannerChanged(false);
+    setAvatarChanged(false);
     void loadOrganizationData();
   }, [loadOrganizationData]);
 
@@ -105,13 +140,7 @@ export function OrgProfilePage({
     setFormMessage(null);
     setUploadingImage(true);
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error('Could not read file.'));
-        reader.readAsDataURL(file);
-      });
-
+      const dataUrl = await readImageAsDataUrl(file);
       setImagePreview(dataUrl);
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -135,6 +164,87 @@ export function OrgProfilePage({
       setUploadedImageUrl(null);
     } finally {
       setUploadingImage(false);
+    }
+  }
+
+  async function handleProfileImageSelect(
+    asset: 'banner' | 'avatar',
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      setFormMessage({ type: 'error', text: 'Choose a PNG, JPEG, or WebP image.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFormMessage({ type: 'error', text: 'Profile images must be 5 MB or smaller.' });
+      return;
+    }
+
+    try {
+      const dataUrl = await readImageAsDataUrl(file);
+      if (asset === 'banner') {
+        setBannerDraft(dataUrl);
+        setBannerChanged(true);
+      } else {
+        setAvatarDraft(dataUrl);
+        setAvatarChanged(true);
+      }
+      setFormMessage(null);
+    } catch (error) {
+      setFormMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Unable to read the selected image.',
+      });
+    }
+  }
+
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setFormMessage(null);
+    setSavingProfile(true);
+    const updates: Array<{
+      asset: 'banner' | 'avatar';
+      changed: boolean;
+      dataUrl: string | null;
+    }> = [
+      { asset: 'banner', changed: bannerChanged, dataUrl: bannerDraft },
+      { asset: 'avatar', changed: avatarChanged, dataUrl: avatarDraft },
+    ];
+
+    try {
+      for (const update of updates) {
+        if (!update.changed) continue;
+        const response = await fetch(`/api/organizations/${org.code}/profile/${update.asset}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ dataUrl: update.dataUrl }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save organization profile image.');
+        }
+
+        setOrganizationProfile(data.profile as OrganizationProfile);
+        if (update.asset === 'banner') setBannerChanged(false);
+        else setAvatarChanged(false);
+      }
+
+      setBannerDraft(null);
+      setAvatarDraft(null);
+      setFormMessage({ type: 'success', text: 'Organization profile images saved.' });
+    } catch (error) {
+      setFormMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Unable to save profile images.',
+      });
+    } finally {
+      setSavingProfile(false);
     }
   }
 
@@ -214,7 +324,7 @@ export function OrgProfilePage({
       <section className="overflow-hidden rounded-[26px] border border-stone-200 bg-white shadow-[0_22px_40px_rgba(15,23,42,0.08)]">
         <div className="relative h-36 overflow-hidden bg-stone-200 sm:h-44">
           <img
-            src={CAMPUS_HERO_IMAGE}
+            src={organizationProfile.bannerDataUrl || CAMPUS_HERO_IMAGE}
             alt={`${org.fullName} cover`}
             referrerPolicy="no-referrer"
             className="h-full w-full object-cover"
@@ -230,7 +340,7 @@ export function OrgProfilePage({
         <div className="relative px-5 pb-4 pt-0">
           <div className="-mt-10 flex flex-col justify-between gap-4 sm:-mt-8 sm:flex-row sm:items-end">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <OrgEmblem org={org} size="lg" />
+              <OrgEmblem org={org} size="lg" imageUrl={organizationProfile.avatarDataUrl} />
               <div className="pt-1 sm:pb-1">
                 <h1 className="font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
                   {org.shortName} — {org.fullName}
@@ -270,6 +380,17 @@ export function OrgProfilePage({
                 }`}
               >
                 Public Feed ({posts.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('profile')}
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+                  activeTab === 'profile'
+                    ? 'bg-[#1E3A8A] text-white'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                Edit Page Images
               </button>
               <button
                 type="button"
@@ -374,6 +495,119 @@ export function OrgProfilePage({
             >
               {formMessage.text}
             </div>
+          )}
+
+          {activeTab === 'profile' && isOwningOfficer && (
+            <form
+              onSubmit={handleSaveProfile}
+              className="space-y-5 rounded-xl border border-stone-200 bg-white p-5"
+            >
+              <div>
+                <h2 className="font-display text-xl font-semibold text-stone-900">
+                  Organization Page Images
+                </h2>
+                <p className="mt-1 text-xs text-stone-500">
+                  Upload original-quality PNG, JPEG, or WebP images up to 5 MB each. Images are stored
+                  as Base64 in {org.shortName}&apos;s own Turso database.
+                </p>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="block text-xs font-medium text-stone-700">Banner image</label>
+                  <div className="overflow-hidden rounded-lg border border-stone-200">
+                    <img
+                      src={
+                        bannerChanged
+                          ? bannerDraft || CAMPUS_HERO_IMAGE
+                          : organizationProfile.bannerDataUrl || CAMPUS_HERO_IMAGE
+                      }
+                      alt={`${org.fullName} banner preview`}
+                      className="h-36 w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-200">
+                      <ImagePlus className="h-4 w-4" />
+                      Choose banner
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => void handleProfileImageSelect('banner', e)}
+                        className="sr-only"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBannerDraft(null);
+                        setBannerChanged(true);
+                      }}
+                      className="cursor-pointer text-xs text-stone-600 hover:text-stone-900"
+                    >
+                      Use campus default
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-medium text-stone-700">Profile image</label>
+                  <div className="flex h-36 items-center justify-center rounded-lg border border-stone-200 bg-stone-50">
+                    <OrgEmblem
+                      org={org}
+                      size="lg"
+                      imageUrl={avatarChanged ? avatarDraft : organizationProfile.avatarDataUrl}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-200">
+                      <ImagePlus className="h-4 w-4" />
+                      Choose profile image
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => void handleProfileImageSelect('avatar', e)}
+                        className="sr-only"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAvatarDraft(null);
+                        setAvatarChanged(true);
+                      }}
+                      className="cursor-pointer text-xs text-stone-600 hover:text-stone-900"
+                    >
+                      Remove profile image
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t border-stone-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBannerDraft(null);
+                    setAvatarDraft(null);
+                    setBannerChanged(false);
+                    setAvatarChanged(false);
+                    setActiveTab('feed');
+                  }}
+                  className="cursor-pointer rounded-lg px-4 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProfile || (!bannerChanged && !avatarChanged)}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1E3A8A] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#172E6E] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  {savingProfile ? 'Saving...' : 'Save Profile Images'}
+                </button>
+              </div>
+            </form>
           )}
 
           {activeTab === 'compose' && isOwningOfficer && (

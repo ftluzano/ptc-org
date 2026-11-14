@@ -4,9 +4,10 @@ import type { OrganizationConfig } from '../config/org-config';
 interface OrgEmblemProps {
   org: Pick<OrganizationConfig, 'code' | 'shortName' | 'accentColor'>;
   size?: 'sm' | 'md' | 'lg';
+  imageUrl?: string | null;
 }
 
-export function OrgEmblem({ org, size = 'md' }: OrgEmblemProps) {
+export function OrgEmblem({ org, size = 'md', imageUrl }: OrgEmblemProps) {
   const monogram =
     org.shortName.length <= 4
       ? org.shortName.toUpperCase()
@@ -25,7 +26,7 @@ export function OrgEmblem({ org, size = 'md' }: OrgEmblemProps) {
       style={{ backgroundColor: org.accentColor }}
       aria-hidden="true"
     >
-      {monogram}
+      {imageUrl ? <img src={imageUrl} alt="" className="h-full w-full rounded-[inherit] object-cover" /> : monogram}
     </div>
   );
 }

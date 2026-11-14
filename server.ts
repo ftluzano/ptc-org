@@ -1,7 +1,10 @@
+import 'dotenv/config';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { cert, getApps, initializeApp, type ServiceAccount } from 'firebase-admin/app';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { createServer as createViteServer } from 'vite';
 import {
   ORGANIZATIONS,
@@ -11,71 +14,120 @@ import {
   getOrgByEmail,
 } from './src/config/org-config.ts';
 import { getCentralDb, getOrgDb, initializeAllDatabases } from './src/lib/turso.ts';
-import type { AuthUser, OrgPost, SubmissionQueueItem } from './src/types/portal.ts';
+import type {
+  AuthUser,
+  OrganizationProfile,
+  OrgPost,
+  SubmissionQueueItem,
+} from './src/types/portal.ts';
 
 const PORT = Number(process.env.PORT || 3000);
 const UPLOADS_DIR = path.resolve(process.cwd(), 'data', 'uploads');
 
-const OFFICER_DEFAULT_PASSCODE = process.env.OFFICER_PASSCODE || 'ptc-officer-2026';
-const CESSCA_DEFAULT_PASSCODE = process.env.CESSCA_PASSCODE || 'cessca-ptc-2026';
-
 interface AuthenticatedRequest extends Request {
   authUser?: AuthUser | null;
+  authError?: string;
 }
 
-function parseCookies(cookieHeader?: string): Record<string, string> {
-  const result: Record<string, string> = {};
-  if (!cookieHeader) return result;
-  for (const part of cookieHeader.split(';')) {
-    const [rawKey, ...rest] = part.trim().split('=');
-    if (!rawKey) continue;
-    result[rawKey] = decodeURIComponent(rest.join('='));
+function getFirebaseAdminAuth() {
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!serviceAccountJson) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is required to verify Firebase ID tokens.');
   }
-  return result;
-}
 
-function extractToken(req: Request): string | null {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.slice(7).trim();
+  const rawAccount: unknown = JSON.parse(serviceAccountJson);
+  if (typeof rawAccount !== 'object' || rawAccount === null) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON must contain a service-account object.');
   }
-  const cookies = parseCookies(req.headers.cookie);
-  return cookies.ptc_session || null;
+  const accountFields = rawAccount as Record<string, unknown>;
+  const projectId = process.env.FIREBASE_PROJECT_ID || accountFields.project_id;
+  const clientEmail = accountFields.client_email;
+  const privateKey = accountFields.private_key;
+  if (
+    typeof projectId !== 'string' ||
+    typeof clientEmail !== 'string' ||
+    typeof privateKey !== 'string'
+  ) {
+    throw new Error('Firebase service-account JSON is missing project_id, client_email, or private_key.');
+  }
+
+  const existingApp = getApps().find((app) => app.name === 'ptc-org-auth');
+  const app =
+    existingApp ??
+    initializeApp(
+      {
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        } satisfies ServiceAccount),
+        projectId,
+      },
+      'ptc-org-auth'
+    );
+  return getAdminAuth(app);
 }
 
-async function resolveSession(req: AuthenticatedRequest, _res: Response, next: NextFunction) {
+async function resolveFirebaseUser(token: string): Promise<AuthUser | null> {
+  const decodedToken = await getFirebaseAdminAuth().verifyIdToken(token);
+  const email = decodedToken.email?.trim().toLowerCase();
+  if (!email || !decodedToken.email_verified) return null;
+
+  if (email === CESSCA_ADMIN_EMAIL.toLowerCase()) {
+    return {
+      uid: decodedToken.uid,
+      email,
+      displayName: CESSCA_ADMIN_NAME,
+      role: 'cessca',
+      orgCode: null,
+    };
+  }
+
+  const org = getOrgByEmail(email);
+  if (!org) return null;
+  return {
+    uid: decodedToken.uid,
+    email: org.email,
+    displayName: org.president,
+    role: 'president',
+    orgCode: org.code,
+  };
+}
+
+async function resolveFirebaseAuth(
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+) {
   try {
-    const token = extractToken(req);
+    const authHeader = req.headers.authorization;
+    const token =
+      authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
     if (!token) {
       req.authUser = null;
       return next();
     }
-
-    const central = getCentralDb();
-    const res = await central.execute({
-      sql: 'SELECT uid, email, display_name, role, org_code FROM sessions WHERE token = ? LIMIT 1',
-      args: [token],
-    });
-
-    if (res.rows.length === 0) {
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
       req.authUser = null;
+      req.authError = 'Firebase Admin authentication is not configured on the server.';
       return next();
     }
-
-    const row = res.rows[0];
-    req.authUser = {
-      uid: String(row.uid),
-      email: String(row.email),
-      displayName: String(row.display_name),
-      role: String(row.role) as AuthUser['role'],
-      orgCode: row.org_code ? String(row.org_code) : null,
-    };
+    req.authUser = await resolveFirebaseUser(token);
     return next();
   } catch (error) {
-    console.error('Session resolution failed:', error);
+    console.error('Firebase token verification failed:', error);
     req.authUser = null;
     return next();
   }
+}
+
+function mapRowToOrganizationProfile(
+  row?: Record<string, unknown>
+): OrganizationProfile {
+  return {
+    bannerDataUrl: row?.banner_data_url ? String(row.banner_data_url) : null,
+    avatarDataUrl: row?.avatar_data_url ? String(row.avatar_data_url) : null,
+  };
 }
 
 function mapRowToOrgPost(row: Record<string, unknown>, orgCode: string): OrgPost {
@@ -128,100 +180,19 @@ async function startServer() {
   const app = express();
   app.use(express.json({ limit: '10mb' }));
   app.use('/uploads', express.static(UPLOADS_DIR));
-  app.use(resolveSession);
+  app.use(resolveFirebaseAuth);
 
   // Health endpoint
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
   });
 
-  // Auth: Get current session
+  // Auth: Resolve the Firebase account to an allow-listed portal role.
   app.get('/api/auth/me', (req: AuthenticatedRequest, res) => {
+    if (req.authError) {
+      return res.status(503).json({ user: null, error: req.authError });
+    }
     res.json({ user: req.authUser ?? null });
-  });
-
-  // Auth: Login (CESSCA Admin or Organization President)
-  app.post('/api/auth/login', async (req: Request, res: Response) => {
-    try {
-      const email = String(req.body?.email ?? '').trim().toLowerCase();
-      const passcode = String(req.body?.passcode ?? '').trim();
-
-      if (!email || !passcode) {
-        return res.status(400).json({ error: 'Email and passcode are required.' });
-      }
-
-      let authUser: AuthUser | null = null;
-
-      if (email === CESSCA_ADMIN_EMAIL.toLowerCase()) {
-        if (passcode !== CESSCA_DEFAULT_PASSCODE) {
-          return res.status(401).json({ error: 'Invalid CESSCA administrator passcode.' });
-        }
-        authUser = {
-          uid: process.env.CESSCA_ADMIN_UID || 'uid_cessca_superadmin',
-          email: CESSCA_ADMIN_EMAIL,
-          displayName: CESSCA_ADMIN_NAME,
-          role: 'cessca',
-          orgCode: null,
-        };
-      } else {
-        const org = getOrgByEmail(email);
-        if (!org) {
-          return res.status(401).json({ error: 'Email is not mapped to an official PTC organization officer.' });
-        }
-        const expectedPasscode = process.env[`OFFICER_PASSCODE_${org.code.toUpperCase()}`] || OFFICER_DEFAULT_PASSCODE;
-        if (passcode !== expectedPasscode) {
-          return res.status(401).json({ error: 'Invalid organization officer passcode.' });
-        }
-        authUser = {
-          uid: process.env[org.uidEnvKey] || `uid_officer_${org.code}`,
-          email: org.email,
-          displayName: org.president,
-          role: 'president',
-          orgCode: org.code,
-        };
-      }
-
-      const token = crypto.randomBytes(24).toString('hex');
-      const central = getCentralDb();
-      await central.execute({
-        sql: `INSERT INTO sessions (token, uid, email, display_name, role, org_code, created_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          token,
-          authUser.uid,
-          authUser.email,
-          authUser.displayName,
-          authUser.role,
-          authUser.orgCode,
-          new Date().toISOString(),
-        ],
-      });
-
-      res.setHeader(
-        'Set-Cookie',
-        `ptc_session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`
-      );
-      return res.json({ user: authUser, token });
-    } catch (error) {
-      console.error('Login error:', error);
-      return res.status(500).json({ error: 'Failed to authenticate.' });
-    }
-  });
-
-  // Auth: Logout
-  app.post('/api/auth/logout', async (req: Request, res: Response) => {
-    try {
-      const token = extractToken(req);
-      if (token) {
-        const central = getCentralDb();
-        await central.execute({ sql: 'DELETE FROM sessions WHERE token = ?', args: [token] });
-      }
-      res.setHeader('Set-Cookie', 'ptc_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
-      return res.json({ ok: true });
-    } catch (error) {
-      console.error('Logout error:', error);
-      return res.status(500).json({ error: 'Failed to sign out.' });
-    }
   });
 
   // Upload event image (accepts base64 data URL from FileReader)
@@ -323,6 +294,93 @@ async function startServer() {
       return res.status(500).json({ error: 'Failed to load organization posts.' });
     }
   });
+
+  app.get('/api/organizations/:code/profile', async (req: Request, res: Response) => {
+    try {
+      const org = getOrgByCode(String(req.params.code));
+      if (!org) {
+        return res.status(404).json({ error: 'Organization not found.' });
+      }
+
+      const db = getOrgDb(org.code);
+      const result = await db.execute(
+        'SELECT banner_data_url, avatar_data_url FROM organization_profile WHERE id = 1'
+      );
+      const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
+      return res.json({ profile: mapRowToOrganizationProfile(row) });
+    } catch (error) {
+      console.error('Failed to load organization profile:', error);
+      return res.status(500).json({ error: 'Failed to load organization profile.' });
+    }
+  });
+
+  app.put(
+    '/api/organizations/:code/profile/:asset',
+    async (req: AuthenticatedRequest, res: Response) => {
+      try {
+        const org = getOrgByCode(String(req.params.code));
+        if (!org) {
+          return res.status(404).json({ error: 'Organization not found.' });
+        }
+
+        const user = req.authUser;
+        if (!user) {
+          return res.status(401).json({ error: 'Please sign in as an organization officer.' });
+        }
+        if (user.role !== 'president' || user.orgCode !== org.code) {
+          return res.status(403).json({ error: 'Only this organization’s officer can edit its profile.' });
+        }
+
+        const asset = String(req.params.asset);
+        const column =
+          asset === 'banner'
+            ? 'banner_data_url'
+            : asset === 'avatar'
+              ? 'avatar_data_url'
+              : null;
+        if (!column) {
+          return res.status(404).json({ error: 'Profile image type not found.' });
+        }
+
+        const dataUrl: unknown = req.body?.dataUrl;
+        if (dataUrl !== null && typeof dataUrl !== 'string') {
+          return res.status(400).json({ error: 'Provide an image data URL or null to remove it.' });
+        }
+        if (typeof dataUrl === 'string') {
+          const match = dataUrl.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
+          if (!match) {
+            return res.status(400).json({ error: 'Use a PNG, JPEG, or WebP image.' });
+          }
+          const imageBytes = Buffer.from(match[2], 'base64');
+          if (
+            imageBytes.byteLength === 0 ||
+            imageBytes.byteLength > 5 * 1024 * 1024 ||
+            imageBytes.toString('base64') !== match[2]
+          ) {
+            return res.status(400).json({ error: 'Image must be valid and 5 MB or smaller.' });
+          }
+        }
+
+        const db = getOrgDb(org.code);
+        await db.execute({
+          sql: `INSERT INTO organization_profile (id, ${column}, updated_at)
+                VALUES (1, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                  ${column} = excluded.${column},
+                  updated_at = excluded.updated_at`,
+          args: [dataUrl, new Date().toISOString()],
+        });
+        const result = await db.execute(
+          'SELECT banner_data_url, avatar_data_url FROM organization_profile WHERE id = 1'
+        );
+        const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
+        return res.json({ profile: mapRowToOrganizationProfile(row) });
+      } catch (error) {
+        console.error('Failed to update organization profile:', error);
+        return res.status(500).json({ error: 'Failed to update organization profile.' });
+      }
+    }
+  );
 
   // Officer-only: View all submissions (pending, approved, rejected) for their assigned org
   app.get('/api/organizations/:code/submissions', async (req: AuthenticatedRequest, res: Response) => {

@@ -1,13 +1,13 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { onIdTokenChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { firebaseConfigured, getFirebaseAuth } from '../lib/firebase';
 import type { AuthUser } from '../types/portal';
-
-const TOKEN_STORAGE_KEY = 'ptc_portal_session_token';
 
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   token: string | null;
-  login: (email: string, passcode: string) => Promise<AuthUser>;
+  login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   getAuthHeaders: () => Record<string, string>;
 }
@@ -16,93 +16,97 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(() => {
-    try {
-      return window.localStorage.getItem(TOKEN_STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  });
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    return headers;
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }, [token]);
 
   useEffect(() => {
+    if (!firebaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
+    const auth = getFirebaseAuth();
     let active = true;
-    async function checkSession() {
-      try {
-        const headers: Record<string, string> = {};
-        if (token) headers.Authorization = `Bearer ${token}`;
-        const res = await fetch('/api/auth/me', { headers });
-        if (!res.ok) {
-          if (active) setUser(null);
-          return;
-        }
-        const data = await res.json();
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
         if (active) {
-          setUser(data.user ?? null);
-          if (!data.user && token) {
-            setToken(null);
-            window.localStorage.removeItem(TOKEN_STORAGE_KEY);
-          }
+          setUser(null);
+          setToken(null);
+          setLoading(false);
         }
-      } catch {
-        if (active) setUser(null);
+        return;
+      }
+
+      try {
+        const nextToken = await firebaseUser.getIdToken();
+        const response = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${nextToken}` },
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Unable to verify your Firebase account with the portal.');
+        }
+        if (!data.user) {
+          await signOut(auth);
+          throw new Error(
+            'This Firebase account must have a verified email assigned to a PTC organization or CESSCA.'
+          );
+        }
+        if (active) {
+          setToken(nextToken);
+          setUser(data.user as AuthUser);
+        }
+      } catch (error) {
+        if (active) {
+          setUser(null);
+          setToken(null);
+        }
+        console.error('Firebase session verification failed:', error);
       } finally {
         if (active) setLoading(false);
       }
-    }
-    checkSession();
+    });
+
     return () => {
       active = false;
+      unsubscribe();
     };
-  }, [token]);
+  }, []);
 
-  const login = useCallback(async (email: string, passcode: string): Promise<AuthUser> => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, passcode }),
+  const login = useCallback(async (email: string, password: string): Promise<AuthUser> => {
+    const auth = getFirebaseAuth();
+    const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+    const nextToken = await credential.user.getIdToken();
+    const response = await fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${nextToken}` },
     });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Authentication failed.');
+    const data = await response.json();
+
+    if (!response.ok || !data.user) {
+      await signOut(auth);
+      throw new Error(
+        data.error ||
+          'This Firebase account must have a verified email assigned to a PTC organization or CESSCA.'
+      );
     }
-    const nextToken = data.token as string | undefined;
-    if (nextToken) {
-      setToken(nextToken);
-      try {
-        window.localStorage.setItem(TOKEN_STORAGE_KEY, nextToken);
-      } catch {
-        // Ignore storage restriction
-      }
-    }
-    setUser(data.user);
-    return data.user as AuthUser;
+
+    const authenticatedUser = data.user as AuthUser;
+    setToken(nextToken);
+    setUser(authenticatedUser);
+    return authenticatedUser;
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-      });
-    } finally {
-      setUser(null);
-      setToken(null);
-      try {
-        window.localStorage.removeItem(TOKEN_STORAGE_KEY);
-      } catch {
-        // Ignore storage restriction
-      }
+    if (firebaseConfigured) {
+      await signOut(getFirebaseAuth());
     }
-  }, [getAuthHeaders]);
+    setUser(null);
+    setToken(null);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, token, login, logout, getAuthHeaders }}>

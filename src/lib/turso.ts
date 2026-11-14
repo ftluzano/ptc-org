@@ -237,18 +237,6 @@ export async function initializeAllDatabases() {
     )
   `);
 
-  await central.execute(`
-    CREATE TABLE IF NOT EXISTS sessions (
-      token TEXT PRIMARY KEY,
-      uid TEXT NOT NULL,
-      email TEXT NOT NULL,
-      display_name TEXT NOT NULL,
-      role TEXT NOT NULL,
-      org_code TEXT,
-      created_at TEXT NOT NULL
-    )
-  `);
-
   for (const org of ORGANIZATIONS) {
     const db = getOrgDb(org.code);
     await db.execute(`
@@ -266,6 +254,14 @@ export async function initializeAllDatabases() {
         likes_count INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         reviewed_at TEXT
+      )
+    `);
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS organization_profile (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        banner_data_url TEXT,
+        avatar_data_url TEXT,
+        updated_at TEXT NOT NULL
       )
     `);
   }

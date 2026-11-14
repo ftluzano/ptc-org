@@ -10,6 +10,11 @@ export interface AuthUser {
   orgCode: string | null;
 }
 
+export interface OrganizationProfile {
+  bannerDataUrl: string | null;
+  avatarDataUrl: string | null;
+}
+
 export interface OrgPost {
   id: string;
   letterRef: string;

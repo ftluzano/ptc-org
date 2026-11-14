@@ -100,7 +100,7 @@ const INITIAL_SEED_POSTS: SeedEntry[] = [
     eventDate: '2026-11-21',
     caption:
       'All undergraduate officers and block representatives are invited to the First Semester General Assembly at the Main Auditorium. We will present the student welfare budget, updated campus facility schedules, and open-floor Q&A with student council committees.',
-    imageUrl: 'seed:student_council',
+    imageUrl: null,
     status: 'approved',
     feedback: 'Approved for campus-wide bulletin and SSC official feed.',
     likesCount: 48,
@@ -115,7 +115,7 @@ const INITIAL_SEED_POSTS: SeedEntry[] = [
     eventDate: '2026-11-28',
     caption:
       'Registration is officially open for teams of 3 to 4 BSIT and BSCS students! Build practical civic and campus productivity tools during our 8-hour sprint at Computing Lab 2. Mentors, snacks, and certificates of participation will be provided.',
-    imageUrl: 'seed:tech_hackathon',
+    imageUrl: null,
     status: 'approved',
     feedback: 'Cleared by CESSCA. Lab reservation confirmed.',
     likesCount: 64,
@@ -130,7 +130,7 @@ const INITIAL_SEED_POSTS: SeedEntry[] = [
     eventDate: '2026-12-04',
     caption:
       'Lace up and represent your department! The PTC Intramural Games kick off at 8:00 AM in the Covered Court with the Parade of Athletes followed by Men’s Basketball and Women’s Volleyball elimination matches. Bring your department colors!',
-    imageUrl: 'seed:sports_intramurals',
+    imageUrl: null,
     status: 'approved',
     feedback: 'Approved. Coordinate marshals with CESSCA athletics desk.',
     likesCount: 82,
@@ -145,7 +145,7 @@ const INITIAL_SEED_POSTS: SeedEntry[] = [
     eventDate: '2026-11-25',
     caption:
       'The Plumage editorial board is accepting news features, photojournalism essays, poetry, and editorial cartoons for our mid-semester broadsheet release. Drop by Press Room 104 or submit drafts before November 25.',
-    imageUrl: 'seed:campus_press',
+    imageUrl: null,
     status: 'approved',
     feedback: 'Approved for publication.',
     likesCount: 37,
@@ -175,7 +175,7 @@ const INITIAL_SEED_POSTS: SeedEntry[] = [
     eventDate: '2026-12-06',
     caption:
       'Requesting approval to host an afternoon hands-on workshop covering pull requests, branching workflows, and SQLite/Turso deployment fundamentals for second-year IT students.',
-    imageUrl: 'seed:tech_hackathon',
+    imageUrl: null,
     status: 'pending',
     feedback: null,
     likesCount: 0,
@@ -190,7 +190,7 @@ const INITIAL_SEED_POSTS: SeedEntry[] = [
     eventDate: '2026-12-09',
     caption:
       'The Debate and Leadership Club submits this event letter for the upcoming British Parliamentary format exhibition match on digital literacy and youth civic participation.',
-    imageUrl: 'seed:student_council',
+    imageUrl: null,
     status: 'pending',
     feedback: null,
     likesCount: 0,

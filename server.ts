@@ -130,6 +130,12 @@ function mapRowToOrganizationProfile(
   };
 }
 
+async function incrementPortalLiveVersion() {
+  await getCentralDb().execute(
+    'UPDATE portal_live_version SET version = version + 1 WHERE id = 1'
+  );
+}
+
 function mapRowToOrgPost(row: Record<string, unknown>, orgCode: string): OrgPost {
   const org = getOrgByCode(orgCode);
   return {
@@ -181,10 +187,27 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
   app.use('/uploads', express.static(UPLOADS_DIR));
   app.use(resolveFirebaseAuth);
+  app.use('/api', (_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
 
   // Health endpoint
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
+  });
+
+  app.get('/api/updates/version', async (_req: Request, res: Response) => {
+    try {
+      const result = await getCentralDb().execute(
+        'SELECT version FROM portal_live_version WHERE id = 1'
+      );
+      res.setHeader('Cache-Control', 'no-store');
+      return res.json({ version: Number(result.rows[0]?.version ?? 0) });
+    } catch (error) {
+      console.error('Failed to read live update version:', error);
+      return res.status(500).json({ error: 'Unable to check for live updates.' });
+    }
   });
 
   // Auth: Resolve the Firebase account to an allow-listed portal role.
@@ -232,11 +255,20 @@ async function startServer() {
           const pendingRes = await db.execute(
             "SELECT COUNT(*) as cnt FROM posts WHERE status = 'pending'"
           );
+          const profileRes = await db.execute(
+            'SELECT avatar_data_url, updated_at FROM organization_profile WHERE id = 1'
+          );
+          const profileRow = profileRes.rows[0];
           return {
             ...org,
             approvedCount: Number(approvedRes.rows[0]?.cnt ?? 0),
             pendingCount: Number(pendingRes.rows[0]?.cnt ?? 0),
             latestPostAt: approvedRes.rows[0]?.latest ? String(approvedRes.rows[0].latest) : null,
+            avatarUrl: profileRow?.avatar_data_url
+              ? `/api/organizations/${org.code}/profile/avatar?v=${encodeURIComponent(
+                  String(profileRow.updated_at ?? '')
+                )}`
+              : null,
           };
         })
       );
@@ -314,6 +346,35 @@ async function startServer() {
     }
   });
 
+  app.get('/api/organizations/:code/profile/avatar', async (req: Request, res: Response) => {
+    try {
+      const org = getOrgByCode(String(req.params.code));
+      if (!org) {
+        return res.status(404).json({ error: 'Organization not found.' });
+      }
+
+      const db = getOrgDb(org.code);
+      const result = await db.execute(
+        'SELECT avatar_data_url FROM organization_profile WHERE id = 1'
+      );
+      const dataUrl = result.rows[0]?.avatar_data_url;
+      if (!dataUrl) {
+        return res.status(404).json({ error: 'Organization profile image not found.' });
+      }
+      const match = String(dataUrl).match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
+      if (!match) {
+        throw new Error(`Stored profile image for ${org.code} has an invalid data URL.`);
+      }
+
+      res.setHeader('Content-Type', `image/${match[1]}`);
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.send(Buffer.from(match[2], 'base64'));
+    } catch (error) {
+      console.error('Failed to load organization avatar:', error);
+      return res.status(500).json({ error: 'Failed to load organization profile image.' });
+    }
+  });
+
   app.put(
     '/api/organizations/:code/profile/:asset',
     async (req: AuthenticatedRequest, res: Response) => {
@@ -370,6 +431,7 @@ async function startServer() {
                   updated_at = excluded.updated_at`,
           args: [dataUrl, new Date().toISOString()],
         });
+        await incrementPortalLiveVersion();
         const result = await db.execute(
           'SELECT banner_data_url, avatar_data_url FROM organization_profile WHERE id = 1'
         );
@@ -478,6 +540,7 @@ async function startServer() {
         ],
       });
 
+      await incrementPortalLiveVersion();
       return res.status(201).json({
         post: {
           id,
@@ -522,6 +585,7 @@ async function startServer() {
       const centralDb = getCentralDb();
       await centralDb.execute({ sql: 'DELETE FROM cessca_queue WHERE id = ?', args: [postId] });
 
+      await incrementPortalLiveVersion();
       return res.json({ ok: true });
     } catch (error) {
       console.error('Failed to delete post:', error);
@@ -538,12 +602,15 @@ async function startServer() {
       }
       const delta = req.body?.unlike ? -1 : 1;
       const orgDb = getOrgDb(org.code);
-      await orgDb.execute({
+      const update = await orgDb.execute({
         sql: `UPDATE posts
               SET likes_count = MAX(0, likes_count + ?)
               WHERE id = ? AND status = 'approved'`,
         args: [delta, String(req.params.postId)],
       });
+      if (update.rowsAffected > 0) {
+        await incrementPortalLiveVersion();
+      }
       const updated = await orgDb.execute({
         sql: 'SELECT likes_count FROM posts WHERE id = ? LIMIT 1',
         args: [String(req.params.postId)],
@@ -635,6 +702,7 @@ async function startServer() {
         args: [newStatus, resolvedFeedback, now, id],
       });
 
+      await incrementPortalLiveVersion();
       const updated = await central.execute({
         sql: 'SELECT * FROM cessca_queue WHERE id = ? LIMIT 1',
         args: [id],

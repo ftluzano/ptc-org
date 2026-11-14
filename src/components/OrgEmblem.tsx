@@ -26,7 +26,16 @@ export function OrgEmblem({ org, size = 'md', imageUrl }: OrgEmblemProps) {
       style={{ backgroundColor: org.accentColor }}
       aria-hidden="true"
     >
-      {imageUrl ? <img src={imageUrl} alt="" className="h-full w-full rounded-[inherit] object-cover" /> : monogram}
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt=""
+          loading="lazy"
+          className="h-full w-full rounded-[inherit] object-cover"
+        />
+      ) : (
+        monogram
+      )}
     </div>
   );
 }

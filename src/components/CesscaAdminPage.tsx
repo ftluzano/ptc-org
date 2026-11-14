@@ -8,6 +8,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import { resolvePostImageUrl } from '../lib/mediaAssets';
 import type { PostStatus, SubmissionQueueItem } from '../types/portal';
 
@@ -70,6 +71,8 @@ export function CesscaAdminPage({
       setLoading(false);
     }
   }, [user?.role, getAuthHeaders]);
+
+  useLiveUpdates(loadQueue);
 
   useEffect(() => {
     void loadQueue();

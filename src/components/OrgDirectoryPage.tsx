@@ -48,7 +48,7 @@ export function OrgDirectoryPage({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <h2 className="font-display text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
-              Explore student organizations
+              Explore Student Organizations
             </h2>
           </div>
 
@@ -104,7 +104,7 @@ export function OrgDirectoryPage({
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-start justify-between gap-3">
-                      <OrgEmblem org={org} size="md" />
+                      <OrgEmblem org={org} size="md" imageUrl={stats?.avatarUrl} />
                       <span className="rounded-full bg-stone-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-600">
                         {org.category}
                       </span>

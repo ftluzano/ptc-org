@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, Check, Heart, Share2, ShieldCheck, ImageOff } from 'lucide-react';
 import { getOrgByCode } from '../config/org-config';
 import { resolvePostImageUrl } from '../lib/mediaAssets';
@@ -7,6 +7,7 @@ import { OrgEmblem } from './OrgEmblem';
 
 interface FacebookPostCardProps {
   post: OrgPost;
+  organizationImageUrl?: string | null;
   showOrgLink?: boolean;
   onOpenOrg?: (orgCode: string) => void;
   onOpenLightbox?: (imageUrl: string, caption: string) => void;
@@ -35,6 +36,7 @@ function formatRelativeTime(iso: string): string {
 
 export function FacebookPostCard({
   post,
+  organizationImageUrl,
   showOrgLink = false,
   onOpenOrg,
   onOpenLightbox,
@@ -51,6 +53,10 @@ export function FacebookPostCard({
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [liking, setLiking] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setLikesCount(post.likesCount);
+  }, [post.likesCount]);
 
   async function handleToggleLike() {
     if (liking || post.status !== 'approved') return;
@@ -92,7 +98,7 @@ export function FacebookPostCard({
     <article className="overflow-hidden rounded-[22px] border border-stone-200 bg-white/90 shadow-[0_16px_28px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_44px_rgba(15,23,42,0.10)]">
       <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
         <div className="flex min-w-0 items-center gap-3">
-          <OrgEmblem org={org} size="sm" />
+          <OrgEmblem org={org} size="sm" imageUrl={organizationImageUrl} />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               {showOrgLink && onOpenOrg ? (

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { ORGANIZATIONS, getOrgByCode } from './config/org-config';
 import { AuthProvider } from './hooks/useAuth';
+import { useLiveUpdates } from './hooks/useLiveUpdates';
 import type { AuthUser, OrgStats } from './types/portal';
 import { TopBar, type ActiveRoute } from './components/TopBar';
 import { OrgDirectoryPage } from './components/OrgDirectoryPage';
@@ -77,6 +78,7 @@ function PortalShell() {
             approvedCount: org.approvedCount,
             pendingCount: org.pendingCount,
             latestPostAt: org.latestPostAt,
+            avatarUrl: org.avatarUrl ?? null,
           };
         }
         setStatsByCode(map);
@@ -85,6 +87,8 @@ function PortalShell() {
       setLoadingOrgs(false);
     }
   }, []);
+
+  useLiveUpdates(fetchOrgStats);
 
   useEffect(() => {
     void fetchOrgStats();

@@ -237,6 +237,16 @@ export async function initializeAllDatabases() {
     )
   `);
 
+  await central.execute(`
+    CREATE TABLE IF NOT EXISTS portal_live_version (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      version INTEGER NOT NULL
+    )
+  `);
+  await central.execute(
+    'INSERT OR IGNORE INTO portal_live_version (id, version) VALUES (1, 0)'
+  );
+
   for (const org of ORGANIZATIONS) {
     const db = getOrgDb(org.code);
     await db.execute(`

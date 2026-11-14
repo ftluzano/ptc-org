@@ -57,4 +57,5 @@ export interface OrgStats {
   approvedCount: number;
   pendingCount: number;
   latestPostAt: string | null;
+  avatarUrl: string | null;
 }

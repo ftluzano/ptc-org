@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { ORGANIZATIONS } from '../config/org-config';
+import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import type { OrgPost } from '../types/portal';
 import { FacebookPostCard } from './FacebookPostCard';
 
@@ -17,30 +18,45 @@ export function GlobalFeedPage({
 }: GlobalFeedPageProps) {
   const [selectedOrg, setSelectedOrg] = useState<string>('all');
   const [posts, setPosts] = useState<OrgPost[]>([]);
+  const [avatarByOrg, setAvatarByOrg] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let active = true;
-    async function loadFeed() {
-      setLoading(true);
-      try {
-        const query = selectedOrg !== 'all' ? `?org=${encodeURIComponent(selectedOrg)}` : '';
-        const res = await fetch(`/api/feed${query}`);
-        if (res.ok && active) {
-          const data = await res.json();
-          setPosts(data.posts ?? []);
-        }
-      } catch {
-        if (active) setPosts([]);
-      } finally {
-        if (active) setLoading(false);
+  const loadFeed = useCallback(async () => {
+    setLoading(true);
+    try {
+      const query = selectedOrg !== 'all' ? `?org=${encodeURIComponent(selectedOrg)}` : '';
+      const [feedRes, orgsRes] = await Promise.all([
+        fetch(`/api/feed${query}`),
+        fetch('/api/organizations'),
+      ]);
+      if (!feedRes.ok || !orgsRes.ok) {
+        throw new Error('Unable to load the campus announcement feed.');
       }
+      const [feedData, orgsData] = await Promise.all([feedRes.json(), orgsRes.json()]);
+      setPosts(feedData.posts ?? []);
+      setAvatarByOrg(
+        Object.fromEntries(
+          (orgsData.organizations ?? []).map(
+            (org: { code: string; avatarUrl?: string | null }) => [
+              org.code,
+              org.avatarUrl ?? null,
+            ]
+          )
+        )
+      );
+    } catch (error) {
+      console.error('Failed to load global feed:', error);
+      setPosts([]);
+    } finally {
+      setLoading(false);
     }
-    void loadFeed();
-    return () => {
-      active = false;
-    };
   }, [selectedOrg]);
+
+  useLiveUpdates(loadFeed);
+
+  useEffect(() => {
+    void loadFeed();
+  }, [loadFeed]);
 
   return (
     <main className="mx-auto max-w-4xl space-y-4 px-4 py-5 sm:px-6 sm:py-6">
@@ -117,6 +133,7 @@ export function GlobalFeedPage({
             <FacebookPostCard
               key={post.id}
               post={post}
+              organizationImageUrl={avatarByOrg[post.orgCode]}
               showOrgLink
               onOpenOrg={onSelectOrg}
               onOpenLightbox={onOpenLightbox}

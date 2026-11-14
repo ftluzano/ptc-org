@@ -17,6 +17,7 @@ import {
   type OrganizationConfig,
 } from '../config/org-config';
 import { useAuth } from '../hooks/useAuth';
+import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import { CAMPUS_HERO_IMAGE, resolvePostImageUrl } from '../lib/mediaAssets';
 import type { OrganizationProfile, OrgPost } from '../types/portal';
 import { FacebookPostCard } from './FacebookPostCard';
@@ -118,6 +119,8 @@ export function OrgProfilePage({
       setLoadingPosts(false);
     }
   }, [org.code, isOwningOfficer, user?.role, getAuthHeaders]);
+
+  useLiveUpdates(loadOrganizationData);
 
   useEffect(() => {
     setActiveTab('feed');
@@ -338,11 +341,13 @@ export function OrgProfilePage({
         </div>
 
         <div className="relative px-5 pb-4 pt-0">
-          <div className="-mt-10 flex flex-col justify-between gap-4 sm:-mt-8 sm:flex-row sm:items-end">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <OrgEmblem org={org} size="lg" imageUrl={organizationProfile.avatarDataUrl} />
-              <div className="pt-1 sm:pb-1">
-                <h1 className="font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+            <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
+              <div className="-mt-10 shrink-0 sm:-mt-8">
+                <OrgEmblem org={org} size="lg" imageUrl={organizationProfile.avatarDataUrl} />
+              </div>
+              <div className="min-w-0 flex-1 pt-1">
+                <h1 className="break-words font-display text-xl font-semibold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
                   {org.shortName} — {org.fullName}
                 </h1>
               </div>
@@ -849,6 +854,7 @@ export function OrgProfilePage({
                   <FacebookPostCard
                     key={post.id}
                     post={post}
+                    organizationImageUrl={organizationProfile.avatarDataUrl}
                     onOpenLightbox={onOpenLightbox}
                   />
                 ))

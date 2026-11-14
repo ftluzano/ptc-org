@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   XCircle,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
@@ -44,7 +45,9 @@ export function CesscaAdminPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [feedbackInput, setFeedbackInput] = useState('');
-  const [processingAction, setProcessingAction] = useState<'approve' | 'reject' | null>(null);
+  const [processingAction, setProcessingAction] = useState<
+    'approve' | 'reject' | 'delete' | null
+  >(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const loadQueue = useCallback(async () => {
@@ -141,6 +144,32 @@ export function CesscaAdminPage({
       onReviewCompleted();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Review failed.');
+    } finally {
+      setProcessingAction(null);
+    }
+  }
+
+  async function handleDeletePending() {
+    if (!selectedItem || selectedItem.status !== 'pending') return;
+    if (!window.confirm(`Permanently delete ${selectedItem.letterRef}? This cannot be undone.`)) {
+      return;
+    }
+
+    setActionError(null);
+    setProcessingAction('delete');
+    try {
+      const res = await fetch(`/api/cessca/queue/${encodeURIComponent(selectedItem.id)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete pending request.');
+      }
+      await loadQueue();
+      onReviewCompleted();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete pending request.');
     } finally {
       setProcessingAction(null);
     }
@@ -423,7 +452,18 @@ export function CesscaAdminPage({
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className={`grid gap-3 pt-1 ${selectedItem.status === 'pending' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                {selectedItem.status === 'pending' && (
+                  <button
+                    type="button"
+                    disabled={processingAction !== null}
+                    onClick={() => void handleDeletePending()}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50 cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>{processingAction === 'delete' ? 'Deleting...' : 'Delete Request'}</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={processingAction !== null}

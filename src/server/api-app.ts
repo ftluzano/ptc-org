@@ -690,6 +690,46 @@ export async function createApiApp() {
     }
   });
 
+  app.delete('/api/cessca/queue/:id', async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (req.authUser?.role !== 'cessca') {
+        return res.status(403).json({ error: 'CESSCA Super Administrator privileges required.' });
+      }
+
+      const id = String(req.params.id);
+      const central = getCentralDb();
+      const result = await central.execute({
+        sql: "SELECT org_code FROM cessca_queue WHERE id = ? AND status = 'pending' LIMIT 1",
+        args: [id],
+      });
+      const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
+      if (!row) {
+        return res.status(404).json({ error: 'Pending request not found.' });
+      }
+
+      const org = getOrgByCode(String(row.org_code));
+      if (!org) {
+        console.error(`Pending request ${id} has an unknown organization code.`);
+        return res.status(500).json({ error: 'The request has an invalid organization.' });
+      }
+
+      await getOrgDb(org.code).execute({
+        sql: "DELETE FROM posts WHERE id = ? AND status = 'pending'",
+        args: [id],
+      });
+      await central.execute({
+        sql: "DELETE FROM cessca_queue WHERE id = ? AND status = 'pending'",
+        args: [id],
+      });
+
+      await incrementPortalLiveVersion();
+      return res.json({ ok: true });
+    } catch (error) {
+      console.error('Failed to delete pending CESSCA request:', error);
+      return res.status(500).json({ error: 'Failed to delete pending request.' });
+    }
+  });
+
   // CESSCA Super Admin: Approve or Reject a submission letter
   app.post('/api/cessca/review/:id', async (req: AuthenticatedRequest, res: Response) => {
     try {

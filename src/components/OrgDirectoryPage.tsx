@@ -91,9 +91,16 @@ export function OrgDirectoryPage({
         <div className="relative min-h-[260px] overflow-hidden lg:min-h-full">
           <img
             src={CAMPUS_HERO_IMAGE}
+            alt=""
+            aria-hidden="true"
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl"
+          />
+          <img
+            src={CAMPUS_HERO_IMAGE}
             alt="Pateros Technological College main building entrance"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#101c3d]/70 via-[#101c3d]/5 to-transparent lg:bg-gradient-to-r lg:from-[#101c3d]/25 lg:via-transparent lg:to-transparent" />
           <div className="absolute bottom-5 left-5 right-5 sm:bottom-8 sm:left-8">

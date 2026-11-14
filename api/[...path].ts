@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { createApiApp } from '../src/server/api-app';
+import { createApiApp } from '../src/server/api-app.ts';
 
 let apiAppPromise: ReturnType<typeof createApiApp> | undefined;
 

@@ -1004,15 +1004,6 @@ export function OrgProfilePage({
                   <h3 className="font-display text-xl font-semibold text-stone-900">
                     No announcements yet
                   </h3>
-                  {isOwningOfficer && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('compose')}
-                      className="px-4 py-2 text-xs font-medium text-white bg-[#1E3A8A] rounded-lg hover:bg-[#172E6E] transition-colors cursor-pointer"
-                    >
-                      Draft First Event Announcement
-                    </button>
-                  )}
                 </div>
               ) : (
                 <div className="portal-stagger space-y-4">

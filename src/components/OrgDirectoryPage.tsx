@@ -136,6 +136,9 @@ export function OrgDirectoryPage({
                         {org.shortName}
                       </h3>
                       <p className="mt-0.5 text-sm leading-snug text-stone-600 line-clamp-2">
+                        {org.fullName}
+                      </p>
+                      <p className="mt-1 text-xs leading-snug text-stone-500 line-clamp-2">
                         {org.aboutText || org.scope}
                       </p>
                     </div>

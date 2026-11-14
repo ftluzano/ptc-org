@@ -145,8 +145,8 @@ export function CesscaAdminPage({
 
   if (user?.role !== 'cessca') {
     return (
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-14">
-        <div className="bg-white border border-stone-200 rounded-xl p-8 text-center space-y-4">
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-6 text-center">
           <div className="w-12 h-12 rounded-xl bg-[#1E3A8A]/10 text-[#1E3A8A] flex items-center justify-center mx-auto">
             <ShieldCheck className="w-6 h-6" />
           </div>
@@ -172,8 +172,8 @@ export function CesscaAdminPage({
   const selectedImgUrl = resolvePostImageUrl(selectedItem?.imageUrl);
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <main className="mx-auto max-w-7xl space-y-4 px-4 py-5 sm:px-6 sm:py-6">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <div className="text-xs uppercase tracking-widest text-stone-500 font-medium">
             Super Administrator Moderation Console
@@ -196,26 +196,26 @@ export function CesscaAdminPage({
       </div>
 
       {/* Summary KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-stone-200 rounded-xl p-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-xl border border-stone-200 bg-white p-3">
           <div className="text-xs text-stone-500">Pending Review</div>
           <div className="font-mono text-2xl font-semibold text-amber-700 tabular-nums mt-1">
             {counts.pending}
           </div>
         </div>
-        <div className="bg-white border border-stone-200 rounded-xl p-4">
+        <div className="rounded-xl border border-stone-200 bg-white p-3">
           <div className="text-xs text-stone-500">Approved & Published</div>
           <div className="font-mono text-2xl font-semibold text-emerald-700 tabular-nums mt-1">
             {counts.approved}
           </div>
         </div>
-        <div className="bg-white border border-stone-200 rounded-xl p-4">
+        <div className="rounded-xl border border-stone-200 bg-white p-3">
           <div className="text-xs text-stone-500">Rejected with Feedback</div>
           <div className="font-mono text-2xl font-semibold text-red-700 tabular-nums mt-1">
             {counts.rejected}
           </div>
         </div>
-        <div className="bg-white border border-stone-200 rounded-xl p-4">
+        <div className="rounded-xl border border-stone-200 bg-white p-3">
           <div className="text-xs text-stone-500">Total Letters Logged</div>
           <div className="font-mono text-2xl font-semibold text-stone-900 tabular-nums mt-1">
             {counts.all}
@@ -249,7 +249,7 @@ export function CesscaAdminPage({
       </div>
 
       {/* Moderation Table + Split Inspector */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
         <div className="lg:col-span-7 bg-white border border-stone-200 rounded-xl overflow-hidden">
           {loading ? (
             <div className="p-8 text-sm text-stone-500">Loading submission queue...</div>
@@ -331,7 +331,7 @@ export function CesscaAdminPage({
         </div>
 
         {/* Right: Letter & Media Inspector */}
-        <aside className="lg:col-span-5 bg-white border border-stone-200 rounded-xl p-5 space-y-4">
+        <aside className="space-y-3 rounded-xl border border-stone-200 bg-white p-4 lg:col-span-5">
           {!selectedItem ? (
             <div className="py-10 text-center text-sm text-stone-500">
               Select a submission row to inspect its media and letter details.

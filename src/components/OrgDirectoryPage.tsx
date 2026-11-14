@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowRight, Search, ShieldCheck } from 'lucide-react';
-import type { OrgCategory, OrganizationConfig } from '../config/org-config';
+import type { OrganizationConfig } from '../config/org-config';
 import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
 import type { OrgStats } from '../types/portal';
 import { OrgEmblem } from './OrgEmblem';
@@ -13,14 +13,6 @@ interface OrgDirectoryPageProps {
   onOpenGlobalFeed: () => void;
 }
 
-const CATEGORIES: Array<'All' | OrgCategory> = [
-  'All',
-  'Governance & Media',
-  'Technology & Academics',
-  'Business & Leadership',
-  'Athletics & Arts',
-];
-
 export function OrgDirectoryPage({
   organizations,
   statsByCode,
@@ -29,13 +21,10 @@ export function OrgDirectoryPage({
   onOpenGlobalFeed,
 }: OrgDirectoryPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<'All' | OrgCategory>('All');
 
   const filteredOrgs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return organizations.filter((org) => {
-      const matchesCategory = activeCategory === 'All' || org.category === activeCategory;
-      if (!matchesCategory) return false;
       if (!q) return true;
       return (
         org.shortName.toLowerCase().includes(q) ||
@@ -44,23 +33,23 @@ export function OrgDirectoryPage({
         org.scope.toLowerCase().includes(q)
       );
     });
-  }, [organizations, searchQuery, activeCategory]);
+  }, [organizations, searchQuery]);
 
   return (
-    <main className="mx-auto max-w-7xl space-y-14 px-4 py-8 sm:px-6 sm:py-12">
-      <section className="relative isolate grid min-h-[420px] overflow-hidden rounded-[30px] bg-[#101c3d] shadow-[0_26px_60px_rgba(15,23,42,0.18)] lg:grid-cols-[1.05fr_.95fr]">
+    <main className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+      <section className="relative isolate grid min-h-[360px] overflow-hidden rounded-[24px] bg-[#101c3d] shadow-[0_20px_44px_rgba(15,23,42,0.16)] lg:grid-cols-[1.05fr_.95fr]">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_10%_0%,rgba(59,130,246,0.25),transparent_48%),linear-gradient(135deg,#101c3d_0%,#172554_58%,#243b70_100%)]" />
-        <div className="flex flex-col items-start justify-center gap-7 px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-100">
-            <ShieldCheck className="h-4 w-4" />
+        <div className="flex flex-col items-start justify-center gap-5 px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-100">
+            <ShieldCheck className="h-3.5 w-3.5" />
             Pateros Technological College
           </div>
 
-          <div className="space-y-4">
-            <h1 className="max-w-xl font-display text-4xl font-semibold leading-[1.05] text-white text-balance sm:text-5xl lg:text-[56px]">
+          <div className="space-y-3">
+            <h1 className="max-w-xl font-display text-3xl font-semibold leading-[1.05] text-white text-balance sm:text-4xl lg:text-5xl">
               Find your people. Make your mark.
             </h1>
-            <p className="max-w-lg text-base leading-relaxed text-blue-100/85 sm:text-lg">
+            <p className="max-w-lg text-sm leading-relaxed text-blue-100/85 sm:text-base">
               Explore student-led communities, discover campus events, and find the place where
               your interests can grow.
             </p>
@@ -88,7 +77,7 @@ export function OrgDirectoryPage({
           </p>
         </div>
 
-        <div className="relative min-h-[260px] overflow-hidden lg:min-h-full">
+        <div className="relative min-h-[220px] overflow-hidden lg:min-h-full">
           <img
             src={CAMPUS_HERO_IMAGE}
             alt=""
@@ -111,19 +100,12 @@ export function OrgDirectoryPage({
         </div>
       </section>
 
-      <section id="org-directory" className="scroll-mt-28 space-y-7">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <section id="org-directory" className="scroll-mt-24 space-y-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#1E3A8A]">
-              Find your community
-            </p>
             <h2 className="font-display text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
               Explore student organizations
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-stone-600 sm:text-base">
-              Browse by interest or search for a group to view its mission, officers, and latest
-              announcements.
-            </p>
           </div>
 
           <div className="relative w-full lg:max-w-sm">
@@ -139,26 +121,8 @@ export function OrgDirectoryPage({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {CATEGORIES.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setActiveCategory(category)}
-              aria-pressed={activeCategory === category}
-              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                activeCategory === category
-                  ? 'border-[#172554] bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.2)]'
-                  : 'border-stone-200 bg-white/80 text-stone-600 hover:border-stone-300 hover:bg-white hover:text-stone-900'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
         {loading ? (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
@@ -167,7 +131,7 @@ export function OrgDirectoryPage({
             ))}
           </div>
         ) : filteredOrgs.length === 0 ? (
-          <div className="rounded-[22px] border border-stone-200 bg-white/90 p-10 text-center shadow-sm">
+          <div className="rounded-[20px] border border-stone-200 bg-white/90 p-7 text-center shadow-sm">
             <p className="text-sm font-medium text-stone-900">
               No student organizations match "{searchQuery}".
             </p>
@@ -175,7 +139,6 @@ export function OrgDirectoryPage({
               type="button"
               onClick={() => {
                 setSearchQuery('');
-                setActiveCategory('All');
               }}
               className="mt-3 rounded-lg bg-[#172554] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#1c2f72] cursor-pointer"
             >
@@ -183,7 +146,7 @@ export function OrgDirectoryPage({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredOrgs.map((org) => {
               const stats = statsByCode[org.code];
               const approvedCount = stats?.approvedCount ?? 0;
@@ -193,7 +156,7 @@ export function OrgDirectoryPage({
                   key={org.code}
                   type="button"
                   onClick={() => onSelectOrg(org.code)}
-                  className="group flex flex-col justify-between gap-5 rounded-[22px] border border-stone-200 bg-white/90 p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-stone-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A8A] cursor-pointer"
+                  className="group flex flex-col justify-between gap-4 rounded-[20px] border border-stone-200 bg-white/90 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A8A] cursor-pointer"
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-start justify-between gap-3">

@@ -43,7 +43,7 @@ export function GlobalFeedPage({
   }, [selectedOrg]);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
+    <main className="mx-auto max-w-4xl space-y-4 px-4 py-5 sm:px-6 sm:py-6">
       <div className="flex items-center justify-between gap-4">
         <button
           type="button"
@@ -55,7 +55,7 @@ export function GlobalFeedPage({
         </button>
       </div>
 
-      <div className="space-y-2 rounded-[24px] border border-stone-200 bg-white/85 p-6 shadow-sm">
+      <div className="space-y-2 rounded-[20px] border border-stone-200 bg-white/85 p-4 shadow-sm">
         <h1 className="font-display text-3xl font-semibold text-stone-900">
           Global Campus Announcements
         </h1>
@@ -94,12 +94,12 @@ export function GlobalFeedPage({
       </div>
 
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="h-72 animate-pulse rounded-[22px] border border-stone-200 bg-white/90 shadow-sm" />
           <div className="h-72 animate-pulse rounded-[22px] border border-stone-200 bg-white/90 shadow-sm" />
         </div>
       ) : posts.length === 0 ? (
-        <div className="rounded-[22px] border border-stone-200 bg-white/90 p-10 text-center shadow-sm">
+        <div className="rounded-[20px] border border-stone-200 bg-white/90 p-7 text-center shadow-sm">
           <p className="text-sm font-medium text-stone-900">
             No approved announcements for this filter yet.
           </p>
@@ -112,7 +112,7 @@ export function GlobalFeedPage({
           </button>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {posts.map((post) => (
             <FacebookPostCard
               key={post.id}

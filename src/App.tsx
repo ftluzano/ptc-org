@@ -9,7 +9,6 @@ import { OrgProfilePage } from './components/OrgProfilePage';
 import { GlobalFeedPage } from './components/GlobalFeedPage';
 import { CesscaAdminPage } from './components/CesscaAdminPage';
 import { LoginModal } from './components/LoginModal';
-import { WorkflowGuideModal } from './components/WorkflowGuideModal';
 
 function parseRouteFromLocation(): ActiveRoute {
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
@@ -47,7 +46,6 @@ function PortalShell() {
   const [statsByCode, setStatsByCode] = useState<Record<string, OrgStats>>({});
   const [loadingOrgs, setLoadingOrgs] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
-  const [guideOpen, setGuideOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ imageUrl: string; caption: string } | null>(null);
 
   const navigate = useCallback((nextRoute: ActiveRoute) => {
@@ -108,7 +106,6 @@ function PortalShell() {
         route={route}
         onNavigate={navigate}
         onOpenLogin={() => setLoginOpen(true)}
-        onOpenWorkflowInfo={() => setGuideOpen(true)}
       />
 
       <div className="flex-1">
@@ -151,45 +148,11 @@ function PortalShell() {
         )}
       </div>
 
-      {/* Minimal Institutional Footer */}
-      <footer className="border-t border-stone-200 bg-white mt-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-          <div>
-            Pateros Technological College · Student Organizations Portal & CESSCA Bulletin
-          </div>
-          <div className="flex items-center gap-5">
-            <button
-              type="button"
-              onClick={() => navigate({ page: 'directory' })}
-              className="hover:text-stone-900 cursor-pointer"
-            >
-              12 Organizations
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate({ page: 'feed' })}
-              className="hover:text-stone-900 cursor-pointer"
-            >
-              Global Feed
-            </button>
-            <button
-              type="button"
-              onClick={() => setGuideOpen(true)}
-              className="hover:text-stone-900 cursor-pointer"
-            >
-              Approval Policy
-            </button>
-          </div>
-        </div>
-      </footer>
-
       <LoginModal
         isOpen={loginOpen}
         onClose={() => setLoginOpen(false)}
         onAuthenticated={handleAuthenticated}
       />
-
-      <WorkflowGuideModal isOpen={guideOpen} onClose={() => setGuideOpen(false)} />
 
       {/* Full-resolution Image Lightbox */}
       {lightbox && (

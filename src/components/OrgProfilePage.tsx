@@ -198,7 +198,7 @@ export function OrgProfilePage({
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-6">
+    <main className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
       <div className="flex items-center justify-between gap-4">
         <button
           type="button"
@@ -213,7 +213,7 @@ export function OrgProfilePage({
       </div>
 
       <section className="overflow-hidden rounded-[26px] border border-stone-200 bg-white shadow-[0_22px_40px_rgba(15,23,42,0.08)]">
-        <div className="relative h-44 overflow-hidden bg-stone-200 sm:h-56">
+        <div className="relative h-36 overflow-hidden bg-stone-200 sm:h-44">
           <img
             src={CAMPUS_HERO_IMAGE}
             alt={`${org.fullName} cover`}
@@ -228,7 +228,7 @@ export function OrgProfilePage({
           />
         </div>
 
-        <div className="relative px-6 pb-6 pt-0">
+        <div className="relative px-5 pb-4 pt-0">
           <div className="-mt-10 flex flex-col justify-between gap-4 sm:-mt-8 sm:flex-row sm:items-end">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
               <OrgEmblem org={org} size="lg" />
@@ -269,7 +269,7 @@ export function OrgProfilePage({
           </div>
 
           {isOwningOfficer && (
-            <div className="mt-6 flex items-center gap-2 overflow-x-auto border-t border-stone-200 pt-4">
+            <div className="mt-4 flex items-center gap-2 overflow-x-auto border-t border-stone-200 pt-3">
               <button
                 type="button"
                 onClick={() => setActiveTab('feed')}
@@ -329,10 +329,10 @@ export function OrgProfilePage({
       )}
 
       {/* Two-Column Organization Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
         {/* Left Sidebar: Organization Charter & Quick Switcher */}
-        <aside className="lg:col-span-4 space-y-5">
-          <div className="bg-white border border-stone-200 rounded-xl p-5 space-y-4">
+        <aside className="space-y-4 lg:col-span-4">
+          <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-4">
             <h2 className="font-display text-lg font-semibold text-stone-900">
               About {org.shortName}
             </h2>
@@ -363,7 +363,7 @@ export function OrgProfilePage({
             </dl>
           </div>
 
-          <div className="bg-white border border-stone-200 rounded-xl p-5 space-y-3">
+          <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-500">
               All 12 PTC Organizations
             </h3>
@@ -387,7 +387,7 @@ export function OrgProfilePage({
         </aside>
 
         {/* Right Main Feed / Officer Composer / Submissions */}
-        <section className="lg:col-span-8 space-y-5">
+        <section className="space-y-4 lg:col-span-8">
           {formMessage && (
             <div
               className={`p-4 rounded-xl border text-sm ${
@@ -403,7 +403,7 @@ export function OrgProfilePage({
           {activeTab === 'compose' && isOwningOfficer && (
             <form
               onSubmit={handleSubmitLetter}
-              className="bg-white border border-stone-200 rounded-xl p-6 space-y-5"
+              className="space-y-4 rounded-xl border border-stone-200 bg-white p-5"
             >
               <div>
                 <h2 className="font-display text-xl font-semibold text-stone-900">
@@ -526,7 +526,7 @@ export function OrgProfilePage({
           )}
 
           {activeTab === 'submissions' && isOwningOfficer && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {submissions.length === 0 ? (
                 <div className="bg-white border border-stone-200 rounded-xl p-10 text-center space-y-3">
                   <p className="text-sm font-medium text-stone-900">No event letters submitted yet.</p>
@@ -544,7 +544,7 @@ export function OrgProfilePage({
                   return (
                     <div
                       key={item.id}
-                      className="bg-white border border-stone-200 rounded-xl p-5 space-y-3"
+                      className="space-y-3 rounded-xl border border-stone-200 bg-white p-4"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="space-y-1">
@@ -616,11 +616,11 @@ export function OrgProfilePage({
           )}
 
           {activeTab === 'feed' && (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {loadingPosts ? (
                 <div className="bg-white border border-stone-200 rounded-xl p-8 animate-pulse h-64" />
               ) : posts.length === 0 ? (
-                <div className="bg-white border border-stone-200 rounded-xl p-10 text-center space-y-3">
+                <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-7 text-center">
                   <h3 className="font-display text-xl font-semibold text-stone-900">
                     No approved announcements yet
                   </h3>

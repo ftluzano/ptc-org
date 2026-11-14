@@ -14,10 +14,9 @@ interface TopBarProps {
   route: ActiveRoute;
   onNavigate: (route: ActiveRoute) => void;
   onOpenLogin: () => void;
-  onOpenWorkflowInfo: () => void;
 }
 
-export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: TopBarProps) {
+export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
   const { user, logout } = useAuth();
   const userOrg = user?.orgCode ? getOrgByCode(user.orgCode) : null;
 
@@ -30,8 +29,8 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
           className="group inline-flex items-center gap-2.5 shrink-0 cursor-pointer"
         >
           <img src={ptcLogo} alt="Pateros Technological College seal" className="h-10 w-10 object-contain" />
-          <span className="font-display text-lg sm:text-xl font-semibold tracking-tight text-stone-900 transition-colors group-hover:text-[#1E3A8A]">
-            Student Orgs
+          <span className="whitespace-nowrap font-display text-sm font-semibold tracking-tight text-stone-900 transition-colors group-hover:text-[#1E3A8A] sm:text-xl">
+            Student Organization Platform
           </span>
         </button>
 
@@ -88,13 +87,6 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={onOpenWorkflowInfo}
-            className="whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors hover:text-stone-900 cursor-pointer"
-          >
-            Approval Guide
-          </button>
         </nav>
 
         <div className="flex items-center shrink-0">
@@ -165,13 +157,6 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
             CESSCA Review
           </button>
         )}
-        <button
-          type="button"
-          onClick={onOpenWorkflowInfo}
-          className="whitespace-nowrap shrink-0 rounded-full px-2 py-1"
-        >
-          Approval Guide
-        </button>
       </div>
     </header>
   );

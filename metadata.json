@@ -1,0 +1,6 @@
+{
+  "name": "PTC Student Organizations Portal",
+  "description": "Centralized student organization portal, Facebook-style event feed, and CESSCA approval workflow for Pateros Technological College.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

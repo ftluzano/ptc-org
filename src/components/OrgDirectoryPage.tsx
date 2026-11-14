@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search, ShieldCheck } from 'lucide-react';
 import type { OrgCategory, OrganizationConfig } from '../config/org-config';
 import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
 import type { OrgStats } from '../types/portal';
@@ -46,121 +46,103 @@ export function OrgDirectoryPage({
     });
   }, [organizations, searchQuery, activeCategory]);
 
-  const totalApprovedPosts = useMemo(
-    () => Object.values(statsByCode).reduce((sum, s) => sum + (s?.approvedCount ?? 0), 0),
-    [statsByCode]
-  );
-
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10">
-      <section className="grid grid-cols-1 overflow-hidden rounded-[28px] border border-stone-200/80 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_50%,#f4f1eb_100%)] shadow-[0_22px_50px_rgba(15,23,42,0.08)] lg:grid-cols-12 lg:items-stretch">
-        <div className="flex flex-col justify-between gap-6 p-6 sm:p-10 lg:col-span-7">
+    <main className="mx-auto max-w-7xl space-y-14 px-4 py-8 sm:px-6 sm:py-12">
+      <section className="relative isolate grid min-h-[420px] overflow-hidden rounded-[30px] bg-[#101c3d] shadow-[0_26px_60px_rgba(15,23,42,0.18)] lg:grid-cols-[1.05fr_.95fr]">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_10%_0%,rgba(59,130,246,0.25),transparent_48%),linear-gradient(135deg,#101c3d_0%,#172554_58%,#243b70_100%)]" />
+        <div className="flex flex-col items-start justify-center gap-7 px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-100">
+            <ShieldCheck className="h-4 w-4" />
+            Pateros Technological College
+          </div>
+
           <div className="space-y-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E3A8A]">
-              Pateros Technological College · Official Student Portal
-            </div>
-            <h1 className="max-w-xl font-display text-3xl font-semibold leading-[1.1] text-stone-900 sm:text-4xl lg:text-[42px] text-balance">
-              Twelve student organizations, one verified campus commons.
+            <h1 className="max-w-xl font-display text-4xl font-semibold leading-[1.05] text-white text-balance sm:text-5xl lg:text-[56px]">
+              Find your people. Make your mark.
             </h1>
-            <p className="max-w-2xl text-base leading-relaxed text-stone-600">
-              Select any accredited student organization below to view its dedicated page, read
-              CESSCA-approved event announcements, and track upcoming campus activities.
+            <p className="max-w-lg text-base leading-relaxed text-blue-100/85 sm:text-lg">
+              Explore student-led communities, discover campus events, and find the place where
+              your interests can grow.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 pt-2">
+          <div className="flex flex-wrap items-center gap-3">
             <a
               href="#org-directory"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#172554] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(23,37,84,0.2)] transition-all hover:-translate-y-0.5 hover:bg-[#1b2d66] whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#172554] shadow-lg shadow-black/15 transition-all hover:-translate-y-0.5 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              <span>Browse 12 Organizations</span>
-              <ArrowRight className="w-4 h-4" />
+              Explore organizations
+              <ArrowRight className="h-4 w-4" />
             </a>
             <button
               type="button"
               onClick={onOpenGlobalFeed}
-              className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white/80 px-5 py-2.5 text-sm font-medium text-stone-800 shadow-sm transition-all hover:-translate-y-0.5 hover:border-stone-300 hover:bg-white whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white cursor-pointer"
             >
-              <span>Open Global Announcements</span>
+              View campus announcements
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 border-t border-stone-200 pt-5">
-            <div className="rounded-2xl border border-stone-200 bg-white/70 p-3 shadow-sm">
-              <div className="font-mono text-2xl font-semibold text-stone-900 tabular-nums">12</div>
-              <div className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-stone-500">
-                Official Groups
-              </div>
-            </div>
-            <div className="rounded-2xl border border-stone-200 bg-white/70 p-3 shadow-sm">
-              <div className="font-mono text-2xl font-semibold text-stone-900 tabular-nums">
-                {totalApprovedPosts}
-              </div>
-              <div className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-stone-500">
-                Approved Bulletins
-              </div>
-            </div>
-            <div className="rounded-2xl border border-stone-200 bg-white/70 p-3 shadow-sm">
-              <div className="font-mono text-2xl font-semibold text-stone-900 tabular-nums">100%</div>
-              <div className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-stone-500">
-                Moderated
-              </div>
-            </div>
-          </div>
+          <p className="text-xs font-medium tracking-wide text-blue-100/65">
+            Official organization information and CESSCA-reviewed announcements
+          </p>
         </div>
 
-        <div className="relative min-h-[240px] bg-stone-200 lg:col-span-5 lg:min-h-full">
+        <div className="relative min-h-[260px] overflow-hidden lg:min-h-full">
           <img
             src={CAMPUS_HERO_IMAGE}
-            alt="Pateros Technological College courtyard and student center"
+            alt="Pateros Technological College main building entrance"
             referrerPolicy="no-referrer"
-            className="h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-5 text-white">
-            <div className="text-xs font-medium uppercase tracking-[0.18em] text-stone-200">
-              Campus Student Commons
-            </div>
-            <div className="mt-1 text-sm font-medium">
-              All event letters are reviewed by CESSCA prior to publication.
+          <div className="absolute inset-0 bg-gradient-to-t from-[#101c3d]/70 via-[#101c3d]/5 to-transparent lg:bg-gradient-to-r lg:from-[#101c3d]/25 lg:via-transparent lg:to-transparent" />
+          <div className="absolute bottom-5 left-5 right-5 sm:bottom-8 sm:left-8">
+            <div className="inline-flex items-center rounded-full border border-white/25 bg-black/25 px-3.5 py-2 text-xs font-medium text-white shadow-lg backdrop-blur-md">
+              Campus life, shaped by students
             </div>
           </div>
         </div>
       </section>
 
-      <section id="org-directory" className="space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
-              Official Student Organizations
+      <section id="org-directory" className="scroll-mt-28 space-y-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#1E3A8A]">
+              Find your community
+            </p>
+            <h2 className="font-display text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+              Explore student organizations
             </h2>
-            <p className="mt-1 text-sm text-stone-600">
-              Click any organization card to enter its dedicated feed and officer charter.
+            <p className="mt-2 text-sm leading-relaxed text-stone-600 sm:text-base">
+              Browse by interest or search for a group to view its mission, officers, and latest
+              announcements.
             </p>
           </div>
 
-          <div className="relative w-full md:w-72">
-            <Search className="pointer-events-none absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-stone-400" />
+          <div className="relative w-full lg:max-w-sm">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search org, president, or scope..."
+              placeholder="Search by name, president, or interest"
               aria-label="Search student organizations"
-              className="w-full rounded-xl border border-stone-300 bg-white/90 py-2.5 pl-9 pr-3 text-sm text-stone-800 shadow-sm outline-none ring-0 transition focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/15"
+              className="w-full rounded-2xl border border-stone-200 bg-white py-3.5 pl-11 pr-4 text-sm text-stone-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-stone-200 bg-white/80 p-1.5 shadow-sm">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {CATEGORIES.map((category) => (
             <button
               key={category}
               type="button"
               onClick={() => setActiveCategory(category)}
-              className={`shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+              aria-pressed={activeCategory === category}
+              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                 activeCategory === category
-                  ? 'bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.22)]'
-                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                  ? 'border-[#172554] bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.2)]'
+                  : 'border-stone-200 bg-white/80 text-stone-600 hover:border-stone-300 hover:bg-white hover:text-stone-900'
               }`}
             >
               {category}

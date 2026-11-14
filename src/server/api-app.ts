@@ -18,6 +18,7 @@ import type {
 interface AuthenticatedRequest extends Request {
   authUser?: AuthUser | null;
   authError?: string;
+  authStatus?: number;
 }
 
 function getFirebaseAdminAuth() {
@@ -59,10 +60,17 @@ function getFirebaseAdminAuth() {
   return getAdminAuth(app);
 }
 
-async function resolveFirebaseUser(token: string): Promise<AuthUser | null> {
+async function resolveFirebaseUser(
+  token: string
+): Promise<{ user: AuthUser | null; error?: string }> {
   const decodedToken = await getFirebaseAdminAuth().verifyIdToken(token);
   const email = decodedToken.email?.trim().toLowerCase();
-  if (!email || !decodedToken.email_verified) return null;
+  if (!email || !decodedToken.email_verified) {
+    return {
+      user: null,
+      error: 'This Firebase account email is not verified. Verify it in Firebase Authentication, then sign in again.',
+    };
+  }
 
   const uid = decodedToken.uid;
   const isCesscaUid = process.env.CESSCA_ADMIN_UID?.trim() === uid;
@@ -75,27 +83,42 @@ async function resolveFirebaseUser(token: string): Promise<AuthUser | null> {
     if (matchingRoleCount > 1) {
       console.error('A Firebase UID is assigned to multiple portal roles.');
     }
-    return null;
+    return {
+      user: null,
+      error:
+        matchingRoleCount === 0
+          ? 'This Firebase UID is not assigned to a portal role. Check CESSCA_ADMIN_UID or the matching OFFICER_UID_* variable in Vercel.'
+          : 'This Firebase UID is assigned to multiple portal roles. Assign it to exactly one role in Vercel.',
+    };
   }
 
   if (isCesscaUid) {
     return {
-      uid,
-      email,
-      displayName: CESSCA_ADMIN_NAME,
-      role: 'cessca',
-      orgCode: null,
+      user: {
+        uid,
+        email,
+        displayName: CESSCA_ADMIN_NAME,
+        role: 'cessca',
+        orgCode: null,
+      },
     };
   }
 
   const org = matchingOrganizations[0];
-  if (!org) return null;
+  if (!org) {
+    return {
+      user: null,
+      error: 'This Firebase UID is not assigned to a portal role. Check the matching OFFICER_UID_* variable in Vercel.',
+    };
+  }
   return {
-    uid,
-    email,
-    displayName: org.president,
-    role: 'president',
-    orgCode: org.code,
+    user: {
+      uid,
+      email,
+      displayName: org.president,
+      role: 'president',
+      orgCode: org.code,
+    },
   };
 }
 
@@ -114,14 +137,23 @@ async function resolveFirebaseAuth(
     }
     if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
       req.authUser = null;
+      req.authStatus = 503;
       req.authError = 'Firebase Admin authentication is not configured on the server.';
       return next();
     }
-    req.authUser = await resolveFirebaseUser(token);
+    const resolution = await resolveFirebaseUser(token);
+    req.authUser = resolution.user;
+    if (resolution.error) {
+      req.authStatus = 403;
+      req.authError = resolution.error;
+    }
     return next();
   } catch (error) {
     console.error('Firebase token verification failed:', error);
     req.authUser = null;
+    req.authStatus = 401;
+    req.authError =
+      'The portal could not verify this Firebase sign-in token. Check FIREBASE_SERVICE_ACCOUNT_JSON and ensure FIREBASE_PROJECT_ID matches the Firebase project used by the website.';
     return next();
   }
 }
@@ -224,7 +256,7 @@ export async function createApiApp() {
   // Auth: Resolve the Firebase account to an allow-listed portal role.
   app.get('/api/auth/me', (req: AuthenticatedRequest, res) => {
     if (req.authError) {
-      return res.status(503).json({ user: null, error: req.authError });
+      return res.status(req.authStatus ?? 503).json({ user: null, error: req.authError });
     }
     res.json({ user: req.authUser ?? null });
   });

@@ -52,9 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         if (!data.user) {
           await signOut(auth);
-          throw new Error(
-            'This Firebase account must have a verified email and an assigned UID for a PTC organization or CESSCA.'
-          );
+          throw new Error('The portal did not assign a role to this Firebase account.');
         }
         if (active) {
           setToken(nextToken);
@@ -80,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string): Promise<AuthUser> => {
     const auth = getFirebaseAuth();
     const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
-    const nextToken = await credential.user.getIdToken();
+    const nextToken = await credential.user.getIdToken(true);
     const response = await fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${nextToken}` },
     });
@@ -89,8 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!response.ok || !data.user) {
       await signOut(auth);
       throw new Error(
-        data.error ||
-          'This Firebase account must have a verified email and an assigned UID for a PTC organization or CESSCA.'
+        data.error || 'The portal did not assign a role to this Firebase account.'
       );
     }
 

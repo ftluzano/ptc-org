@@ -32,19 +32,21 @@ export function getOrgDb(orgCode: string): Client {
   const cached = orgClients.get(org.code);
   if (cached) return cached;
 
-  ensureDataDirs();
-
   const envUrl = process.env[org.envUrlKey];
   const envToken = process.env[org.envTokenKey];
 
-  const client = envUrl
-    ? createClient({
-        url: envUrl,
-        authToken: envToken || undefined,
-      })
-    : createClient({
-        url: `file:${path.join(ORG_DB_DIR, `org_${org.code}.db`)}`,
-      });
+  let client: Client;
+  if (envUrl) {
+    client = createClient({
+      url: envUrl,
+      authToken: envToken || undefined,
+    });
+  } else {
+    ensureDataDirs();
+    client = createClient({
+      url: `file:${path.join(ORG_DB_DIR, `org_${org.code}.db`)}`,
+    });
+  }
 
   orgClients.set(org.code, client);
   return client;
@@ -56,19 +58,20 @@ export function getOrgDb(orgCode: string): Client {
 export function getCentralDb(): Client {
   if (centralClient) return centralClient;
 
-  ensureDataDirs();
-
   const envUrl = process.env.TURSO_DATABASE_URL_CESSCA;
   const envToken = process.env.TURSO_AUTH_TOKEN_CESSCA;
 
-  centralClient = envUrl
-    ? createClient({
-        url: envUrl,
-        authToken: envToken || undefined,
-      })
-    : createClient({
-        url: `file:${path.join(DATA_DIR, 'cessca_central.db')}`,
-      });
+  if (envUrl) {
+    centralClient = createClient({
+      url: envUrl,
+      authToken: envToken || undefined,
+    });
+  } else {
+    ensureDataDirs();
+    centralClient = createClient({
+      url: `file:${path.join(DATA_DIR, 'cessca_central.db')}`,
+    });
+  }
 
   return centralClient;
 }
@@ -212,9 +215,33 @@ const INITIAL_SEED_POSTS: SeedEntry[] = [
 ];
 
 let initialized = false;
+let initializationPromise: Promise<void> | null = null;
 
-export async function initializeAllDatabases() {
-  if (initialized) return;
+export function initializeAllDatabases(): Promise<void> {
+  if (initialized) return Promise.resolve();
+  if (initializationPromise) return initializationPromise;
+
+  initializationPromise = initializeDatabases().catch((error: unknown) => {
+    initializationPromise = null;
+    throw error;
+  });
+  return initializationPromise;
+}
+
+async function initializeDatabases() {
+  if (process.env.VERCEL) {
+    const requiredVariables = [
+      'TURSO_DATABASE_URL_CESSCA',
+      'TURSO_AUTH_TOKEN_CESSCA',
+      ...ORGANIZATIONS.flatMap((org) => [org.envUrlKey, org.envTokenKey]),
+    ];
+    const missingVariables = requiredVariables.filter((key) => !process.env[key]?.trim());
+    if (missingVariables.length > 0) {
+      throw new Error(
+        `Missing required Vercel database environment variables: ${missingVariables.join(', ')}`
+      );
+    }
+  }
 
   const central = getCentralDb();
   await central.execute(`

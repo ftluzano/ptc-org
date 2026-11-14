@@ -1,26 +1,19 @@
-import 'dotenv/config';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
 import { cert, getApps, initializeApp, type ServiceAccount } from 'firebase-admin/app';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
-import { createServer as createViteServer } from 'vite';
 import {
   ORGANIZATIONS,
   CESSCA_ADMIN_NAME,
   getOrgByCode,
-} from './src/config/org-config.ts';
-import { getCentralDb, getOrgDb, initializeAllDatabases } from './src/lib/turso.ts';
+} from '../config/org-config.ts';
+import { getCentralDb, getOrgDb, initializeAllDatabases } from '../lib/turso.ts';
 import type {
   AuthUser,
   OrganizationProfile,
   OrgPost,
   SubmissionQueueItem,
-} from './src/types/portal.ts';
-
-const PORT = Number(process.env.PORT || 3000);
-const UPLOADS_DIR = path.resolve(process.cwd(), 'data', 'uploads');
+} from '../types/portal.ts';
 
 interface AuthenticatedRequest extends Request {
   authUser?: AuthUser | null;
@@ -189,19 +182,25 @@ function mapRowToQueueItem(row: Record<string, unknown>): SubmissionQueueItem {
   };
 }
 
-async function startServer() {
-  await initializeAllDatabases();
-  if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-  }
-
+export async function createApiApp() {
   const app = express();
   app.use(express.json({ limit: '10mb' }));
-  app.use('/uploads', express.static(UPLOADS_DIR));
   app.use(resolveFirebaseAuth);
   app.use('/api', (_req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Cache-Control', 'no-store');
     next();
+  });
+  app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path === '/health' || req.path === '/auth/me') {
+      return next();
+    }
+
+    void initializeAllDatabases()
+      .then(() => next())
+      .catch((error: unknown) => {
+        console.error('Failed to initialize portal databases:', error);
+        res.status(503).json({ error: 'Portal databases are unavailable.' });
+      });
   });
 
   // Health endpoint
@@ -241,14 +240,11 @@ async function startServer() {
       if (!match) {
         return res.status(400).json({ error: 'Invalid image format. Please upload a PNG, JPG, or WebP image.' });
       }
-      const ext = match[1] === 'jpeg' ? 'jpg' : match[1];
       const buffer = Buffer.from(match[2], 'base64');
       if (buffer.byteLength > 5 * 1024 * 1024) {
         return res.status(400).json({ error: 'Image must be 5 MB or smaller.' });
       }
-      const filename = `event_${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${ext}`;
-      fs.writeFileSync(path.join(UPLOADS_DIR, filename), buffer);
-      return res.json({ url: `/uploads/${filename}` });
+      return res.json({ url: dataUrl });
     } catch (error) {
       console.error('Upload error:', error);
       return res.status(500).json({ error: 'Failed to upload image.' });
@@ -729,27 +725,9 @@ async function startServer() {
     }
   });
 
-  // Vite dev middleware or static dist serving
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distDir = path.resolve(process.cwd(), 'dist');
-    app.use(express.static(distDir));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(distDir, 'index.html'));
-    });
-  }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`PTC Student Organizations Portal listening on http://0.0.0.0:${PORT}`);
+  app.use('/api', (_req: Request, res: Response) => {
+    res.status(404).json({ error: 'API endpoint not found.' });
   });
-}
 
-startServer().catch((err) => {
-  console.error('Fatal startup error:', err);
-  process.exit(1);
-});
+  return app;
+}

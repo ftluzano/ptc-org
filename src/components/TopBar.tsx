@@ -47,18 +47,6 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
             Organizations
           </button>
 
-          <button
-            type="button"
-            onClick={() => onNavigate({ page: 'feed' })}
-            className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
-              route.page === 'feed'
-                ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
-                : 'hover:text-stone-900'
-            }`}
-          >
-            Global Feed
-          </button>
-
           {user?.role === 'president' && userOrg && (
             <button
               type="button"
@@ -129,15 +117,6 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
           }`}
         >
           Organizations
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate({ page: 'feed' })}
-          className={`whitespace-nowrap shrink-0 rounded-full px-2 py-1 ${
-            route.page === 'feed' ? 'bg-white text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200' : ''
-          }`}
-        >
-          Global Feed
         </button>
         {user?.role === 'president' && userOrg && (
           <button

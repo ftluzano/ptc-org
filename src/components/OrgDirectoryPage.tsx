@@ -143,12 +143,7 @@ export function OrgDirectoryPage({
                   className="group flex flex-col justify-between gap-3 rounded-[18px] border border-stone-200 bg-white/90 p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A8A] cursor-pointer sm:gap-4 sm:rounded-[20px] sm:p-4"
                 >
                   <div className="space-y-3.5">
-                    <div className="flex items-start justify-between gap-3">
-                      <OrgEmblem org={org} size="md" imageUrl={stats?.avatarUrl} />
-                      <span className="rounded-full bg-stone-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-600">
-                        {org.category}
-                      </span>
-                    </div>
+                    <OrgEmblem org={org} size="md" imageUrl={stats?.avatarUrl} />
 
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 transition-colors group-hover:text-[#1E3A8A]">

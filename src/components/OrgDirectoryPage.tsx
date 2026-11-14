@@ -8,14 +8,12 @@ import { OrgEmblem } from './OrgEmblem';
 interface OrgDirectoryPageProps {
   organizations: OrganizationConfig[];
   statsByCode: Record<string, OrgStats>;
-  loading: boolean;
   onSelectOrg: (orgCode: string) => void;
 }
 
 export function OrgDirectoryPage({
   organizations,
   statsByCode,
-  loading,
   onSelectOrg,
 }: OrgDirectoryPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,7 +26,8 @@ export function OrgDirectoryPage({
         org.shortName.toLowerCase().includes(q) ||
         org.fullName.toLowerCase().includes(q) ||
         org.president.toLowerCase().includes(q) ||
-        org.scope.toLowerCase().includes(q)
+        org.scope.toLowerCase().includes(q) ||
+        org.aboutText?.toLowerCase().includes(q)
       );
     });
   }, [organizations, searchQuery]);
@@ -101,16 +100,7 @@ export function OrgDirectoryPage({
           </div>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <div
-                key={idx}
-                className="h-48 animate-pulse rounded-[22px] border border-stone-200 bg-white/80 shadow-sm"
-              />
-            ))}
-          </div>
-        ) : filteredOrgs.length === 0 ? (
+        {filteredOrgs.length === 0 ? (
           <div className="rounded-[20px] border border-stone-200 bg-white/90 p-7 text-center shadow-sm">
             <p className="text-sm font-medium text-stone-900">
               No student organizations match "{searchQuery}".
@@ -146,7 +136,7 @@ export function OrgDirectoryPage({
                         {org.shortName}
                       </h3>
                       <p className="mt-0.5 text-sm leading-snug text-stone-600 line-clamp-2">
-                        {org.scope}
+                        {org.aboutText || org.scope}
                       </p>
                     </div>
                   </div>

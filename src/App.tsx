@@ -46,7 +46,6 @@ function PortalShell() {
   const [route, setRoute] = useState<ActiveRoute>(() => parseRouteFromLocation());
   const [organizations, setOrganizations] = useState<OrganizationConfig[]>(ORGANIZATIONS);
   const [statsByCode, setStatsByCode] = useState<Record<string, OrgStats>>({});
-  const [loadingOrgs, setLoadingOrgs] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ imageUrl: string; caption: string } | null>(null);
 
@@ -71,35 +70,36 @@ function PortalShell() {
   }, []);
 
   const fetchOrgStats = useCallback(async () => {
-    try {
-      const res = await fetch('/api/organizations');
-      if (res.ok) {
-        const data = await res.json();
-        const map: Record<string, OrgStats> = {};
-        const returnedOrganizations = new Map<string, OrganizationConfig>(
-          (data.organizations ?? []).map((org: OrganizationConfig) => [org.code, org])
-        );
-        setOrganizations(
-          ORGANIZATIONS.map((org) => {
-            const updated = returnedOrganizations.get(org.code);
-            return updated
-              ? { ...org, shortName: updated.shortName, fullName: updated.fullName }
-              : org;
-          })
-        );
-        for (const org of data.organizations ?? []) {
-          map[org.code] = {
-            orgCode: org.code,
-            approvedCount: org.approvedCount,
-            pendingCount: org.pendingCount,
-            latestPostAt: org.latestPostAt,
-            avatarUrl: org.avatarUrl ?? null,
-          };
-        }
-        setStatsByCode(map);
+    const res = await fetch('/api/organizations');
+    if (res.ok) {
+      const data = await res.json();
+      const map: Record<string, OrgStats> = {};
+      const returnedOrganizations = new Map<string, OrganizationConfig>(
+        (data.organizations ?? []).map((org: OrganizationConfig) => [org.code, org])
+      );
+      setOrganizations(
+        ORGANIZATIONS.map((org) => {
+          const updated = returnedOrganizations.get(org.code);
+          return updated
+            ? {
+                ...org,
+                shortName: updated.shortName,
+                fullName: updated.fullName,
+                aboutText: updated.aboutText,
+              }
+            : org;
+        })
+      );
+      for (const org of data.organizations ?? []) {
+        map[org.code] = {
+          orgCode: org.code,
+          approvedCount: org.approvedCount,
+          pendingCount: org.pendingCount,
+          latestPostAt: org.latestPostAt,
+          avatarUrl: org.avatarUrl ?? null,
+        };
       }
-    } finally {
-      setLoadingOrgs(false);
+      setStatsByCode(map);
     }
   }, []);
 
@@ -132,7 +132,6 @@ function PortalShell() {
           <OrgDirectoryPage
             organizations={organizations}
             statsByCode={statsByCode}
-            loading={loadingOrgs}
             onSelectOrg={(code) => navigate({ page: 'org', orgCode: code })}
           />
         )}

@@ -117,97 +117,105 @@ async function initializeDatabases() {
   }
 
   const central = getCentralDb();
-  await central.execute(`
-    CREATE TABLE IF NOT EXISTS cessca_queue (
-      id TEXT PRIMARY KEY,
-      letter_ref TEXT NOT NULL,
-      org_code TEXT NOT NULL,
-      org_short_name TEXT NOT NULL,
-      org_full_name TEXT NOT NULL,
-      president_name TEXT NOT NULL,
-      title TEXT NOT NULL,
-      event_date TEXT NOT NULL,
-      caption TEXT NOT NULL,
-      image_url TEXT,
-      status TEXT NOT NULL DEFAULT 'pending',
-      feedback TEXT,
-      submitted_at TEXT NOT NULL,
-      reviewed_at TEXT,
-      reviewed_by TEXT
-    )
-  `);
+  await Promise.all([
+    (async () => {
+      await central.execute(`
+        CREATE TABLE IF NOT EXISTS cessca_queue (
+          id TEXT PRIMARY KEY,
+          letter_ref TEXT NOT NULL,
+          org_code TEXT NOT NULL,
+          org_short_name TEXT NOT NULL,
+          org_full_name TEXT NOT NULL,
+          president_name TEXT NOT NULL,
+          title TEXT NOT NULL,
+          event_date TEXT NOT NULL,
+          caption TEXT NOT NULL,
+          image_url TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          feedback TEXT,
+          submitted_at TEXT NOT NULL,
+          reviewed_at TEXT,
+          reviewed_by TEXT
+        )
+      `);
 
-  await central.execute(`
-    CREATE TABLE IF NOT EXISTS portal_live_version (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
-      version INTEGER NOT NULL
-    )
-  `);
-  await central.execute(
-    'INSERT OR IGNORE INTO portal_live_version (id, version) VALUES (1, 0)'
-  );
-
-  for (const org of ORGANIZATIONS) {
-    const db = getOrgDb(org.code);
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS posts (
-        id TEXT PRIMARY KEY,
-        letter_ref TEXT NOT NULL,
-        org_code TEXT NOT NULL,
-        author_name TEXT NOT NULL,
-        title TEXT NOT NULL,
-        event_date TEXT NOT NULL,
-        caption TEXT NOT NULL,
-        image_url TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        feedback TEXT,
-        likes_count INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        reviewed_at TEXT
-      )
-    `);
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS organization_profile (
-        id INTEGER PRIMARY KEY CHECK (id = 1),
-        banner_data_url TEXT,
-        avatar_data_url TEXT,
-        about_text TEXT,
-        organization_name TEXT,
-        organization_short_name TEXT,
-        updated_at TEXT NOT NULL
-      )
-    `);
-    const profileColumns = await db.execute('PRAGMA table_info(organization_profile)');
-    const existingColumns = new Set(profileColumns.rows.map((column) => String(column.name)));
-    for (const column of ['about_text', 'organization_name', 'organization_short_name']) {
-      if (!existingColumns.has(column)) {
-        await db.execute(`ALTER TABLE organization_profile ADD COLUMN ${column} TEXT`);
-      }
-    }
-  }
+      await central.execute(`
+        CREATE TABLE IF NOT EXISTS portal_live_version (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          version INTEGER NOT NULL
+        )
+      `);
+      await central.execute(
+        'INSERT OR IGNORE INTO portal_live_version (id, version) VALUES (1, 0)'
+      );
+    })(),
+    Promise.all(
+      ORGANIZATIONS.map(async (org) => {
+        const db = getOrgDb(org.code);
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS posts (
+            id TEXT PRIMARY KEY,
+            letter_ref TEXT NOT NULL,
+            org_code TEXT NOT NULL,
+            author_name TEXT NOT NULL,
+            title TEXT NOT NULL,
+            event_date TEXT NOT NULL,
+            caption TEXT NOT NULL,
+            image_url TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            feedback TEXT,
+            likes_count INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            reviewed_at TEXT
+          )
+        `);
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS organization_profile (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            banner_data_url TEXT,
+            avatar_data_url TEXT,
+            about_text TEXT,
+            organization_name TEXT,
+            organization_short_name TEXT,
+            updated_at TEXT NOT NULL
+          )
+        `);
+        const profileColumns = await db.execute('PRAGMA table_info(organization_profile)');
+        const existingColumns = new Set(profileColumns.rows.map((column) => String(column.name)));
+        for (const column of ['about_text', 'organization_name', 'organization_short_name']) {
+          if (!existingColumns.has(column)) {
+            await db.execute(`ALTER TABLE organization_profile ADD COLUMN ${column} TEXT`);
+          }
+        }
+      })
+    ),
+  ]);
 
   const mockPostIds = LEGACY_MOCK_POSTS.map((post) => post.id);
   const placeholders = mockPostIds.map(() => '?').join(', ');
-  let removedMockPosts = (
-    await central.execute({
+  const [centralCleanup, orgCleanupResults] = await Promise.all([
+    central.execute({
       sql: `DELETE FROM cessca_queue WHERE id IN (${placeholders})`,
       args: mockPostIds,
-    })
-  ).rowsAffected;
+    }),
+    Promise.all(
+      ORGANIZATIONS.map(async (org) => {
+        const orgMockPostIds = LEGACY_MOCK_POSTS
+          .filter((post) => post.orgCode === org.code)
+          .map((post) => post.id);
+        if (orgMockPostIds.length === 0) return 0;
 
-  for (const org of ORGANIZATIONS) {
-    const orgMockPostIds = LEGACY_MOCK_POSTS
-      .filter((post) => post.orgCode === org.code)
-      .map((post) => post.id);
-    if (orgMockPostIds.length === 0) continue;
-
-    const orgPlaceholders = orgMockPostIds.map(() => '?').join(', ');
-    const result = await getOrgDb(org.code).execute({
-      sql: `DELETE FROM posts WHERE id IN (${orgPlaceholders})`,
-      args: orgMockPostIds,
-    });
-    removedMockPosts += result.rowsAffected;
-  }
+        const orgPlaceholders = orgMockPostIds.map(() => '?').join(', ');
+        const result = await getOrgDb(org.code).execute({
+          sql: `DELETE FROM posts WHERE id IN (${orgPlaceholders})`,
+          args: orgMockPostIds,
+        });
+        return result.rowsAffected;
+      })
+    ),
+  ]);
+  const removedMockPosts =
+    centralCleanup.rowsAffected + orgCleanupResults.reduce((total, count) => total + count, 0);
 
   if (removedMockPosts > 0) {
     await central.execute(

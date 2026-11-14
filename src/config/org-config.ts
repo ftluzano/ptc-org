@@ -8,6 +8,7 @@ export interface OrganizationConfig {
   code: string;
   shortName: string;
   fullName: string;
+  aboutText?: string;
   president: string;
   scope: string;
   category: OrgCategory;

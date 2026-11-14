@@ -313,30 +313,35 @@ export async function createApiApp() {
       const organizations = await Promise.all(
         ORGANIZATIONS.map(async (org) => {
           const db = getOrgDb(org.code);
-          const approvedRes = await db.execute(
-            "SELECT COUNT(*) as cnt, MAX(created_at) as latest FROM posts WHERE status = 'approved'"
-          );
-          const pendingRes = await db.execute(
-            "SELECT COUNT(*) as cnt FROM posts WHERE status = 'pending'"
-          );
-          const profileRes = await db.execute(
-            'SELECT avatar_data_url, updated_at, organization_name, organization_short_name FROM organization_profile WHERE id = 1'
-          );
-          const profileRow = profileRes.rows[0];
+          const result = await db.execute(`
+            SELECT
+              (SELECT COUNT(*) FROM posts WHERE status = 'approved') AS approved_count,
+              (SELECT COUNT(*) FROM posts WHERE status = 'pending') AS pending_count,
+              (SELECT MAX(created_at) FROM posts WHERE status = 'approved') AS latest_post_at,
+              profile.avatar_data_url,
+              profile.updated_at,
+              profile.about_text,
+              profile.organization_name,
+              profile.organization_short_name
+            FROM (SELECT 1) AS singleton
+            LEFT JOIN organization_profile AS profile ON profile.id = 1
+          `);
+          const row = result.rows[0];
           return {
             ...org,
-            fullName: profileRow?.organization_name
-              ? String(profileRow.organization_name)
+            fullName: row?.organization_name
+              ? String(row.organization_name)
               : org.fullName,
-            shortName: profileRow?.organization_short_name
-              ? String(profileRow.organization_short_name)
+            shortName: row?.organization_short_name
+              ? String(row.organization_short_name)
               : org.shortName,
-            approvedCount: Number(approvedRes.rows[0]?.cnt ?? 0),
-            pendingCount: Number(pendingRes.rows[0]?.cnt ?? 0),
-            latestPostAt: approvedRes.rows[0]?.latest ? String(approvedRes.rows[0].latest) : null,
-            avatarUrl: profileRow?.avatar_data_url
+            aboutText: row?.about_text ? String(row.about_text) : '',
+            approvedCount: Number(row?.approved_count ?? 0),
+            pendingCount: Number(row?.pending_count ?? 0),
+            latestPostAt: row?.latest_post_at ? String(row.latest_post_at) : null,
+            avatarUrl: row?.avatar_data_url
               ? `/api/organizations/${org.code}/profile/avatar?v=${encodeURIComponent(
-                  String(profileRow.updated_at ?? '')
+                  String(row.updated_at ?? '')
                 )}`
               : null,
           };

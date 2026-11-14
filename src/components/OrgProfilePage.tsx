@@ -138,6 +138,13 @@ export function OrgProfilePage({
   useLiveUpdates(loadOrganizationData);
 
   useEffect(() => {
+    if (formMessage?.type !== 'success') return;
+
+    const timeoutId = window.setTimeout(() => setFormMessage(null), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [formMessage]);
+
+  useEffect(() => {
     setActiveTab('feed');
     setFormMessage(null);
     setBannerDraft(null);
@@ -296,11 +303,11 @@ export function OrgProfilePage({
         setOrganizationNameChanged(false);
         setOrganizationNameDraft('');
         setOrganizationShortNameDraft('');
-        onPostsMutated();
       }
 
       setBannerDraft(null);
       setAvatarDraft(null);
+      onPostsMutated();
       setFormMessage({ type: 'success', text: 'Organization profile updated.' });
     } catch (error) {
       setFormMessage({
@@ -425,16 +432,7 @@ export function OrgProfilePage({
               </div>
             </div>
 
-            {isOwningOfficer ? (
-              <button
-                type="button"
-                onClick={() => setActiveTab('compose')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#172554] px-4 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(23,37,84,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1b2d66] sm:w-auto sm:shrink-0"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Write Event Letter</span>
-              </button>
-            ) : !user ? (
+            {!user ? (
               <button
                 type="button"
                 onClick={onOpenLogin}

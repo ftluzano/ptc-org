@@ -1,5 +1,6 @@
 import React from 'react';
 import { LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
+import ptcLogo from '../assets/images/ptc logo.png';
 import { useAuth } from '../hooks/useAuth';
 import { getOrgByCode } from '../config/org-config';
 
@@ -26,11 +27,9 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
         <button
           type="button"
           onClick={() => onNavigate({ page: 'directory' })}
-          className="group inline-flex items-center gap-2 shrink-0 cursor-pointer"
+          className="group inline-flex items-center gap-2.5 shrink-0 cursor-pointer"
         >
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#172554] text-[10px] font-bold text-white shadow-sm">
-            PTC
-          </span>
+          <img src={ptcLogo} alt="Pateros Technological College seal" className="h-10 w-10 object-contain" />
           <span className="font-display text-lg sm:text-xl font-semibold tracking-tight text-stone-900 transition-colors group-hover:text-[#1E3A8A]">
             Student Orgs
           </span>

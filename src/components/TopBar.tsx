@@ -21,26 +21,29 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
   const userOrg = user?.orgCode ? getOrgByCode(user.orgCode) : null;
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-stone-200">
+    <header className="sticky top-0 z-30 border-b border-stone-200/80 bg-white/90 backdrop-blur-xl shadow-[0_1px_0_rgba(15,23,42,0.04)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-8">
-        {/* Zone 1: Single-line Brand wordmark */}
         <button
           type="button"
           onClick={() => onNavigate({ page: 'directory' })}
-          className="font-display text-lg sm:text-xl font-semibold tracking-tight text-stone-900 whitespace-nowrap shrink-0 hover:text-[#1E3A8A] transition-colors cursor-pointer"
+          className="group inline-flex items-center gap-2 shrink-0 cursor-pointer"
         >
-          PTC Student Orgs
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#172554] text-[10px] font-bold text-white shadow-sm">
+            PTC
+          </span>
+          <span className="font-display text-lg sm:text-xl font-semibold tracking-tight text-stone-900 transition-colors group-hover:text-[#1E3A8A]">
+            Student Orgs
+          </span>
         </button>
 
-        {/* Zone 2: Concise single-line navigation links */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-stone-600">
+        <nav className="hidden md:flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50/80 p-1 text-sm font-medium text-stone-600 shadow-inner shadow-stone-100">
           <button
             type="button"
             onClick={() => onNavigate({ page: 'directory' })}
-            className={`whitespace-nowrap shrink-0 py-1 border-b-2 transition-colors cursor-pointer ${
+            className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
               route.page === 'directory' || route.page === 'org'
-                ? 'border-[#1E3A8A] text-stone-900'
-                : 'border-transparent hover:text-stone-900'
+                ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
+                : 'hover:text-stone-900'
             }`}
           >
             Organizations
@@ -49,10 +52,10 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
           <button
             type="button"
             onClick={() => onNavigate({ page: 'feed' })}
-            className={`whitespace-nowrap shrink-0 py-1 border-b-2 transition-colors cursor-pointer ${
+            className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
               route.page === 'feed'
-                ? 'border-[#1E3A8A] text-stone-900'
-                : 'border-transparent hover:text-stone-900'
+                ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
+                : 'hover:text-stone-900'
             }`}
           >
             Global Feed
@@ -62,10 +65,10 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
             <button
               type="button"
               onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
-              className={`whitespace-nowrap shrink-0 py-1 border-b-2 transition-colors cursor-pointer ${
+              className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
                 route.page === 'org' && route.orgCode === userOrg.code
-                  ? 'border-[#1E3A8A] text-stone-900'
-                  : 'border-transparent hover:text-stone-900'
+                  ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
+                  : 'hover:text-stone-900'
               }`}
             >
               {userOrg.shortName} Studio
@@ -76,10 +79,10 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
             <button
               type="button"
               onClick={() => onNavigate({ page: 'cessca' })}
-              className={`whitespace-nowrap shrink-0 py-1 border-b-2 transition-colors cursor-pointer ${
+              className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
                 route.page === 'cessca'
-                  ? 'border-[#1E3A8A] text-stone-900'
-                  : 'border-transparent hover:text-stone-900'
+                  ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
+                  : 'hover:text-stone-900'
               }`}
             >
               CESSCA Review
@@ -89,19 +92,18 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
           <button
             type="button"
             onClick={onOpenWorkflowInfo}
-            className="whitespace-nowrap shrink-0 py-1 border-b-2 border-transparent hover:text-stone-900 transition-colors cursor-pointer"
+            className="whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors hover:text-stone-900 cursor-pointer"
           >
             Approval Guide
           </button>
         </nav>
 
-        {/* Zone 3: Single primary action button */}
         <div className="flex items-center shrink-0">
           {user ? (
             <button
               type="button"
               onClick={() => void logout()}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-stone-800 bg-stone-100 hover:bg-stone-200 border border-stone-200 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-medium text-stone-800 shadow-sm transition-all hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md whitespace-nowrap shrink-0 cursor-pointer"
               title={`Signed in as ${user.displayName} (${user.email}). Click to sign out.`}
             >
               {user.role === 'cessca' ? (
@@ -118,7 +120,7 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
             <button
               type="button"
               onClick={onOpenLogin}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-[#1E3A8A] hover:bg-[#172E6E] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#172554] px-4 py-2 text-xs font-semibold text-white shadow-[0_8px_18px_rgba(23,37,84,0.28)] transition-all hover:-translate-y-0.5 hover:bg-[#1b2d66] whitespace-nowrap shrink-0 cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Login</span>
@@ -127,13 +129,12 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
         </div>
       </div>
 
-      {/* Mobile secondary bar (compact, single-line controls) */}
-      <div className="md:hidden border-t border-stone-200 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs font-medium text-stone-600">
+      <div className="md:hidden border-t border-stone-200/80 bg-stone-50/70 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs font-medium text-stone-600">
         <button
           type="button"
           onClick={() => onNavigate({ page: 'directory' })}
-          className={`whitespace-nowrap shrink-0 py-1 ${
-            route.page === 'directory' || route.page === 'org' ? 'text-[#1E3A8A] font-semibold' : ''
+          className={`whitespace-nowrap shrink-0 rounded-full px-2 py-1 ${
+            route.page === 'directory' || route.page === 'org' ? 'bg-white text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200' : ''
           }`}
         >
           Organizations
@@ -141,8 +142,8 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
         <button
           type="button"
           onClick={() => onNavigate({ page: 'feed' })}
-          className={`whitespace-nowrap shrink-0 py-1 ${
-            route.page === 'feed' ? 'text-[#1E3A8A] font-semibold' : ''
+          className={`whitespace-nowrap shrink-0 rounded-full px-2 py-1 ${
+            route.page === 'feed' ? 'bg-white text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200' : ''
           }`}
         >
           Global Feed
@@ -151,7 +152,7 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
           <button
             type="button"
             onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
-            className="whitespace-nowrap shrink-0 py-1 text-[#1E3A8A] font-semibold"
+            className="whitespace-nowrap shrink-0 rounded-full bg-white px-2 py-1 text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200"
           >
             {userOrg.shortName} Studio
           </button>
@@ -160,7 +161,7 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
           <button
             type="button"
             onClick={() => onNavigate({ page: 'cessca' })}
-            className="whitespace-nowrap shrink-0 py-1 text-[#1E3A8A] font-semibold"
+            className="whitespace-nowrap shrink-0 rounded-full bg-white px-2 py-1 text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200"
           >
             CESSCA Review
           </button>
@@ -168,7 +169,7 @@ export function TopBar({ route, onNavigate, onOpenLogin, onOpenWorkflowInfo }: T
         <button
           type="button"
           onClick={onOpenWorkflowInfo}
-          className="whitespace-nowrap shrink-0 py-1"
+          className="whitespace-nowrap shrink-0 rounded-full px-2 py-1"
         >
           Approval Guide
         </button>

@@ -89,34 +89,32 @@ export function FacebookPostCard({
   }
 
   return (
-    <article className="bg-white border border-stone-200 rounded-xl overflow-hidden">
-      {/* Post Author Header */}
-      <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+    <article className="overflow-hidden rounded-[22px] border border-stone-200 bg-white/90 shadow-[0_16px_28px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_44px_rgba(15,23,42,0.10)]">
+      <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+        <div className="flex min-w-0 items-center gap-3">
           <OrgEmblem org={org} size="sm" />
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1.5">
               {showOrgLink && onOpenOrg ? (
                 <button
                   type="button"
                   onClick={() => onOpenOrg(post.orgCode)}
-                  className="text-sm font-semibold text-stone-900 hover:text-[#1E3A8A] hover:underline cursor-pointer truncate"
+                  className="truncate text-sm font-semibold text-stone-900 transition-colors hover:text-[#1E3A8A] hover:underline cursor-pointer"
                 >
                   {post.orgShortName} — {post.orgFullName}
                 </button>
               ) : (
-                <span className="text-sm font-semibold text-stone-900 truncate">
+                <span className="truncate text-sm font-semibold text-stone-900">
                   {post.orgShortName} — {post.orgFullName}
                 </span>
               )}
             </div>
-            {/* Unboxed metadata with typographic dot separators */}
-            <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs text-stone-500 mt-0.5">
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-stone-500">
               <span>President {post.authorName}</span>
               <span aria-hidden="true">·</span>
               <span>Published {formatRelativeTime(post.reviewedAt || post.createdAt)}</span>
               <span aria-hidden="true">·</span>
-              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+              <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 CESSCA Approved
               </span>
@@ -124,26 +122,24 @@ export function FacebookPostCard({
           </div>
         </div>
 
-        <span className="font-mono text-[11px] text-stone-400 tabular-nums shrink-0 pt-0.5">
+        <span className="shrink-0 pt-0.5 font-mono text-[11px] text-stone-400 tabular-nums">
           {post.letterRef}
         </span>
       </div>
 
-      {/* Event Headline & Caption Body */}
-      <div className="px-5 pb-4 space-y-2">
+      <div className="space-y-2 px-5 pb-4">
         <div className="flex items-center gap-2 text-xs font-medium text-[#1E3A8A]">
           <Calendar className="w-3.5 h-3.5 shrink-0" />
           <span>Event Date: {formatEventDate(post.eventDate)}</span>
         </div>
-        <h3 className="text-lg font-semibold text-stone-900 leading-snug">{post.title}</h3>
-        <p className="text-[15px] text-stone-700 leading-relaxed whitespace-pre-line">
+        <h3 className="text-lg font-semibold leading-snug text-stone-900">{post.title}</h3>
+        <p className="whitespace-pre-line text-[15px] leading-relaxed text-stone-700">
           {post.caption}
         </p>
       </div>
 
-      {/* Media Attachment */}
       {resolvedImg && !imgError && (
-        <div className="bg-stone-100 border-y border-stone-200">
+        <div className="border-y border-stone-200 bg-stone-100">
           <button
             type="button"
             onClick={() => onOpenLightbox?.(resolvedImg, post.title)}
@@ -161,22 +157,21 @@ export function FacebookPostCard({
       )}
 
       {resolvedImg && imgError && (
-        <div className="bg-stone-100 border-y border-stone-200 py-12 px-6 flex flex-col items-center justify-center text-stone-400 gap-2">
+        <div className="flex flex-col items-center justify-center gap-2 border-y border-stone-200 bg-stone-100 px-6 py-12 text-stone-400">
           <ImageOff className="w-6 h-6" />
           <span className="text-xs">{post.title}</span>
         </div>
       )}
 
-      {/* Facebook-style Engagement Bar */}
-      <div className="px-5 py-3 flex items-center justify-between gap-4 border-t border-stone-100 text-xs text-stone-600">
+      <div className="flex items-center justify-between gap-4 border-t border-stone-100 px-5 py-3 text-xs text-stone-600">
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => void handleToggleLike()}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-colors cursor-pointer ${
               liked
                 ? 'bg-[#1E3A8A]/10 text-[#1E3A8A]'
-                : 'hover:bg-stone-100 text-stone-700'
+                : 'text-stone-700 hover:bg-stone-100'
             }`}
           >
             <Heart className={`w-4 h-4 ${liked ? 'fill-[#1E3A8A] text-[#1E3A8A]' : ''}`} />
@@ -187,7 +182,7 @@ export function FacebookPostCard({
           <button
             type="button"
             onClick={() => void handleShare()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium hover:bg-stone-100 text-stone-700 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium text-stone-700 transition-colors hover:bg-stone-100 cursor-pointer"
           >
             {copied ? (
               <>
@@ -207,7 +202,7 @@ export function FacebookPostCard({
           <button
             type="button"
             onClick={() => onOpenOrg(post.orgCode)}
-            className="text-xs font-medium text-[#1E3A8A] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+            className="shrink-0 whitespace-nowrap text-xs font-medium text-[#1E3A8A] transition hover:underline cursor-pointer"
           >
             Visit {post.orgShortName} Page →
           </button>

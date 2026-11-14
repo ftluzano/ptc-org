@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+:root {
+  --brand-900: #172554;
+  --brand-700: #1d4ed8;
+  --brand-50: #eef4ff;
+  --surface-strong: #ffffff;
+  --surface-soft: #f8fafc;
+  --surface-muted: #f1f5f9;
+  --border-soft: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.12);
+  --text-strong: #0f172a;
+  --text-muted: #475569;
+  --shadow-soft: 0 14px 32px rgba(15, 23, 42, 0.08);
+}
+
 @theme {
   --font-display: "Fraunces", Georgia, serif;
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -10,10 +24,39 @@
   html {
     font-family: var(--font-sans);
     scroll-behavior: smooth;
+    background: linear-gradient(180deg, #f5f7fb 0%, #f3f4f6 100%);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f5f7fb 0%, #f4f1eb 100%);
+    color: var(--text-strong);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
   }
 
   h1, h2, .font-display {
     font-family: var(--font-display);
+  }
+
+  ::selection {
+    background: rgba(29, 78, 216, 0.18);
   }
 }
 

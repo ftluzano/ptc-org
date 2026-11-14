@@ -43,19 +43,19 @@ export function GlobalFeedPage({
   }, [selectedOrg]);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
       <div className="flex items-center justify-between gap-4">
         <button
           type="button"
           onClick={onBackToDirectory}
-          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 hover:text-[#1E3A8A] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#1E3A8A] cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Organizations Directory</span>
         </button>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-[24px] border border-stone-200 bg-white/85 p-6 shadow-sm">
         <h1 className="font-display text-3xl font-semibold text-stone-900">
           Global Campus Announcements
         </h1>
@@ -65,15 +65,14 @@ export function GlobalFeedPage({
         </p>
       </div>
 
-      {/* Interactive Organization Filter Bar */}
-      <div className="flex items-center gap-1.5 p-1 bg-stone-200/70 rounded-lg overflow-x-auto">
+      <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-stone-200 bg-white/80 p-1.5 shadow-sm">
         <button
           type="button"
           onClick={() => setSelectedOrg('all')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+          className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
             selectedOrg === 'all'
-              ? 'bg-white text-stone-900 shadow-xs'
-              : 'text-stone-600 hover:text-stone-900'
+              ? 'bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.22)]'
+              : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
           }`}
         >
           All 12 Orgs
@@ -83,10 +82,10 @@ export function GlobalFeedPage({
             key={org.code}
             type="button"
             onClick={() => setSelectedOrg(org.code)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               selectedOrg === org.code
-                ? 'bg-white text-stone-900 shadow-xs'
-                : 'text-stone-600 hover:text-stone-900'
+                ? 'bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.22)]'
+                : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
             }`}
           >
             {org.shortName}
@@ -96,18 +95,18 @@ export function GlobalFeedPage({
 
       {loading ? (
         <div className="space-y-4">
-          <div className="bg-white border border-stone-200 rounded-xl h-72 animate-pulse" />
-          <div className="bg-white border border-stone-200 rounded-xl h-72 animate-pulse" />
+          <div className="h-72 animate-pulse rounded-[22px] border border-stone-200 bg-white/90 shadow-sm" />
+          <div className="h-72 animate-pulse rounded-[22px] border border-stone-200 bg-white/90 shadow-sm" />
         </div>
       ) : posts.length === 0 ? (
-        <div className="bg-white border border-stone-200 rounded-xl p-10 text-center space-y-3">
+        <div className="rounded-[22px] border border-stone-200 bg-white/90 p-10 text-center shadow-sm">
           <p className="text-sm font-medium text-stone-900">
             No approved announcements for this filter yet.
           </p>
           <button
             type="button"
             onClick={() => setSelectedOrg('all')}
-            className="px-4 py-2 text-xs font-medium text-white bg-[#1E3A8A] rounded-lg hover:bg-[#172E6E] transition-colors cursor-pointer"
+            className="mt-3 rounded-lg bg-[#172554] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#1c2f72] cursor-pointer"
           >
             Show All Organizations
           </button>

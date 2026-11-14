@@ -198,47 +198,45 @@ export function OrgProfilePage({
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-      {/* Return Breadcrumb */}
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-6">
       <div className="flex items-center justify-between gap-4">
         <button
           type="button"
           onClick={onBackToDirectory}
-          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 hover:text-[#1E3A8A] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#1E3A8A] cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to All 12 Organizations</span>
         </button>
 
-        <span className="text-xs text-stone-500 font-mono">/org/{org.code}</span>
+        <span className="font-mono text-xs text-stone-500">/org/{org.code}</span>
       </div>
 
-      {/* Facebook-style Organization Profile Header */}
-      <section className="bg-white border border-stone-200 rounded-xl overflow-hidden">
-        <div className="h-44 sm:h-56 relative bg-stone-200 overflow-hidden">
+      <section className="overflow-hidden rounded-[26px] border border-stone-200 bg-white shadow-[0_22px_40px_rgba(15,23,42,0.08)]">
+        <div className="relative h-44 overflow-hidden bg-stone-200 sm:h-56">
           <img
             src={CAMPUS_HERO_IMAGE}
             alt={`${org.fullName} cover`}
             referrerPolicy="no-referrer"
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
           />
           <div
-            className="absolute inset-0 opacity-75"
+            className="absolute inset-0 opacity-80"
             style={{
               background: `linear-gradient(120deg, ${org.accentColor} 0%, rgba(17,24,39,0.55) 100%)`,
             }}
           />
         </div>
 
-        <div className="px-6 pb-6 pt-0 relative">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-10 sm:-mt-8">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+        <div className="relative px-6 pb-6 pt-0">
+          <div className="-mt-10 flex flex-col justify-between gap-4 sm:-mt-8 sm:flex-row sm:items-end">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
               <OrgEmblem org={org} size="lg" />
               <div className="pt-1 sm:pb-1">
-                <h1 className="font-display text-2xl sm:text-3xl font-semibold text-stone-900">
+                <h1 className="font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
                   {org.shortName} — {org.fullName}
                 </h1>
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm text-stone-600 mt-1">
+                <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-600 sm:text-sm">
                   <span>President: {org.president}</span>
                   <span aria-hidden="true">·</span>
                   <span>{org.category}</span>
@@ -254,7 +252,7 @@ export function OrgProfilePage({
               <button
                 type="button"
                 onClick={() => setActiveTab('compose')}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-white bg-[#1E3A8A] hover:bg-[#172E6E] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#172554] px-4 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(23,37,84,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1b2d66] whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Submit Event Letter</span>
@@ -263,20 +261,19 @@ export function OrgProfilePage({
               <button
                 type="button"
                 onClick={onOpenLogin}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 border border-stone-200 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-100 px-4 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-200 whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <span>Officer Sign-In</span>
               </button>
             ) : null}
           </div>
 
-          {/* Officer Studio Tabs when logged in as THIS organization's President */}
           {isOwningOfficer && (
-            <div className="mt-6 pt-4 border-t border-stone-200 flex items-center gap-2 overflow-x-auto">
+            <div className="mt-6 flex items-center gap-2 overflow-x-auto border-t border-stone-200 pt-4">
               <button
                 type="button"
                 onClick={() => setActiveTab('feed')}
-                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                   activeTab === 'feed'
                     ? 'bg-[#1E3A8A] text-white'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
@@ -287,7 +284,7 @@ export function OrgProfilePage({
               <button
                 type="button"
                 onClick={() => setActiveTab('compose')}
-                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                   activeTab === 'compose'
                     ? 'bg-[#1E3A8A] text-white'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
@@ -298,7 +295,7 @@ export function OrgProfilePage({
               <button
                 type="button"
                 onClick={() => setActiveTab('submissions')}
-                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                   activeTab === 'submissions'
                     ? 'bg-[#1E3A8A] text-white'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'

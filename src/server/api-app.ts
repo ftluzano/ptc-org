@@ -65,10 +65,10 @@ async function resolveFirebaseUser(
 ): Promise<{ user: AuthUser | null; error?: string }> {
   const decodedToken = await getFirebaseAdminAuth().verifyIdToken(token);
   const email = decodedToken.email?.trim().toLowerCase();
-  if (!email || !decodedToken.email_verified) {
+  if (!email) {
     return {
       user: null,
-      error: 'This Firebase account email is not verified. Verify it in Firebase Authentication, then sign in again.',
+      error: 'This Firebase account does not have an email address.',
     };
   }
 

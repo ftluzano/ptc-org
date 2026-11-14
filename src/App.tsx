@@ -122,7 +122,6 @@ function PortalShell() {
             statsByCode={statsByCode}
             loading={loadingOrgs}
             onSelectOrg={(code) => navigate({ page: 'org', orgCode: code })}
-            onOpenFeed={() => navigate({ page: 'feed' })}
           />
         )}
 

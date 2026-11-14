@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowRight, Megaphone, Search } from 'lucide-react';
+import { ArrowDown, ArrowRight, Search } from 'lucide-react';
 import type { OrganizationConfig } from '../config/org-config';
 import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
 import type { OrgStats } from '../types/portal';
@@ -10,7 +10,6 @@ interface OrgDirectoryPageProps {
   statsByCode: Record<string, OrgStats>;
   loading: boolean;
   onSelectOrg: (orgCode: string) => void;
-  onOpenFeed: () => void;
 }
 
 export function OrgDirectoryPage({
@@ -18,7 +17,6 @@ export function OrgDirectoryPage({
   statsByCode,
   loading,
   onSelectOrg,
-  onOpenFeed,
 }: OrgDirectoryPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -74,14 +72,6 @@ export function OrgDirectoryPage({
                 Explore organizations
                 <ArrowDown className="h-4 w-4" />
               </a>
-              <button
-                type="button"
-                onClick={onOpenFeed}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                <Megaphone className="h-4 w-4" />
-                Campus announcements
-              </button>
             </div>
           </div>
         </div>

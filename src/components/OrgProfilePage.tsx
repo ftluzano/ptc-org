@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Clock,
   ImagePlus,
-  MapPin,
   Send,
   Trash2,
   User,
@@ -236,15 +235,6 @@ export function OrgProfilePage({
                 <h1 className="font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
                   {org.shortName} — {org.fullName}
                 </h1>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-600 sm:text-sm">
-                  <span>President: {org.president}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{org.category}</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="tabular-nums">
-                    {posts.length} Approved {posts.length === 1 ? 'Announcement' : 'Announcements'}
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -344,20 +334,6 @@ export function OrgProfilePage({
                 <div>
                   <dt className="text-stone-400">Official President</dt>
                   <dd className="font-medium text-stone-900">{org.president}</dd>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
-                <div>
-                  <dt className="text-stone-400">Campus Office</dt>
-                  <dd className="font-medium text-stone-900">{org.officeLocation}</dd>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <Calendar className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
-                <div>
-                  <dt className="text-stone-400">Established</dt>
-                  <dd className="font-medium text-stone-900 tabular-nums">{org.foundedYear}</dd>
                 </div>
               </div>
             </dl>

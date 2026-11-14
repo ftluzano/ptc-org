@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Search, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
 import type { OrganizationConfig } from '../config/org-config';
 import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
 import type { OrgStats } from '../types/portal';
@@ -10,7 +10,6 @@ interface OrgDirectoryPageProps {
   statsByCode: Record<string, OrgStats>;
   loading: boolean;
   onSelectOrg: (orgCode: string) => void;
-  onOpenGlobalFeed: () => void;
 }
 
 export function OrgDirectoryPage({
@@ -18,7 +17,6 @@ export function OrgDirectoryPage({
   statsByCode,
   loading,
   onSelectOrg,
-  onOpenGlobalFeed,
 }: OrgDirectoryPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -37,67 +35,13 @@ export function OrgDirectoryPage({
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
-      <section className="relative isolate grid min-h-[360px] overflow-hidden rounded-[24px] bg-[#101c3d] shadow-[0_20px_44px_rgba(15,23,42,0.16)] lg:grid-cols-[1.05fr_.95fr]">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_10%_0%,rgba(59,130,246,0.25),transparent_48%),linear-gradient(135deg,#101c3d_0%,#172554_58%,#243b70_100%)]" />
-        <div className="flex flex-col items-start justify-center gap-5 px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-100">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Pateros Technological College
-          </div>
-
-          <div className="space-y-3">
-            <h1 className="max-w-xl font-display text-3xl font-semibold leading-[1.05] text-white text-balance sm:text-4xl lg:text-5xl">
-              Find your people. Make your mark.
-            </h1>
-            <p className="max-w-lg text-sm leading-relaxed text-blue-100/85 sm:text-base">
-              Explore student-led communities, discover campus events, and find the place where
-              your interests can grow.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <a
-              href="#org-directory"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#172554] shadow-lg shadow-black/15 transition-all hover:-translate-y-0.5 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              Explore organizations
-              <ArrowRight className="h-4 w-4" />
-            </a>
-            <button
-              type="button"
-              onClick={onOpenGlobalFeed}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white cursor-pointer"
-            >
-              View campus announcements
-            </button>
-          </div>
-
-          <p className="text-xs font-medium tracking-wide text-blue-100/65">
-            Official organization information and CESSCA-reviewed announcements
-          </p>
-        </div>
-
-        <div className="relative min-h-[220px] overflow-hidden lg:min-h-full">
-          <img
-            src={CAMPUS_HERO_IMAGE}
-            alt=""
-            aria-hidden="true"
-            referrerPolicy="no-referrer"
-            className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl"
-          />
-          <img
-            src={CAMPUS_HERO_IMAGE}
-            alt="Pateros Technological College main building entrance"
-            referrerPolicy="no-referrer"
-            className="absolute inset-0 h-full w-full object-contain"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#101c3d]/70 via-[#101c3d]/5 to-transparent lg:bg-gradient-to-r lg:from-[#101c3d]/25 lg:via-transparent lg:to-transparent" />
-          <div className="absolute bottom-5 left-5 right-5 sm:bottom-8 sm:left-8">
-            <div className="inline-flex items-center rounded-full border border-white/25 bg-black/25 px-3.5 py-2 text-xs font-medium text-white shadow-lg backdrop-blur-md">
-              Campus life, shaped by students
-            </div>
-          </div>
-        </div>
+      <section className="relative h-[230px] overflow-hidden rounded-[24px] bg-stone-200 shadow-[0_20px_44px_rgba(15,23,42,0.16)] sm:h-[300px] lg:h-[360px]">
+        <img
+          src={CAMPUS_HERO_IMAGE}
+          alt="Pateros Technological College main building entrance"
+          referrerPolicy="no-referrer"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
       </section>
 
       <section id="org-directory" className="scroll-mt-24 space-y-5">

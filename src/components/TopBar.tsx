@@ -34,48 +34,37 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
           </span>
         </button>
 
-        <nav className="hidden md:flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50/80 p-1 text-sm font-medium text-stone-600 shadow-inner shadow-stone-100">
-          <button
-            type="button"
-            onClick={() => onNavigate({ page: 'directory' })}
-            className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
-              route.page === 'directory' || route.page === 'org'
-                ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
-                : 'hover:text-stone-900'
-            }`}
-          >
-            Organizations
-          </button>
+        {(user?.role === 'president' || user?.role === 'cessca') && (
+          <nav className="hidden md:flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50/80 p-1 text-sm font-medium text-stone-600 shadow-inner shadow-stone-100">
+            {user?.role === 'president' && userOrg && (
+              <button
+                type="button"
+                onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
+                className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
+                  route.page === 'org' && route.orgCode === userOrg.code
+                    ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
+                    : 'hover:text-stone-900'
+                }`}
+              >
+                {userOrg.shortName} Studio
+              </button>
+            )}
 
-          {user?.role === 'president' && userOrg && (
-            <button
-              type="button"
-              onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
-              className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
-                route.page === 'org' && route.orgCode === userOrg.code
-                  ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
-                  : 'hover:text-stone-900'
-              }`}
-            >
-              {userOrg.shortName} Studio
-            </button>
-          )}
-
-          {user?.role === 'cessca' && (
-            <button
-              type="button"
-              onClick={() => onNavigate({ page: 'cessca' })}
-              className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
-                route.page === 'cessca'
-                  ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
-                  : 'hover:text-stone-900'
-              }`}
-            >
-              CESSCA Review
-            </button>
-          )}
-
-        </nav>
+            {user?.role === 'cessca' && (
+              <button
+                type="button"
+                onClick={() => onNavigate({ page: 'cessca' })}
+                className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
+                  route.page === 'cessca'
+                    ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
+                    : 'hover:text-stone-900'
+                }`}
+              >
+                CESSCA Review
+              </button>
+            )}
+          </nav>
+        )}
 
         <div className="flex items-center shrink-0">
           {user ? (
@@ -108,35 +97,28 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
         </div>
       </div>
 
-      <div className="md:hidden border-t border-stone-200/80 bg-stone-50/70 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs font-medium text-stone-600">
-        <button
-          type="button"
-          onClick={() => onNavigate({ page: 'directory' })}
-          className={`whitespace-nowrap shrink-0 rounded-full px-2 py-1 ${
-            route.page === 'directory' || route.page === 'org' ? 'bg-white text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200' : ''
-          }`}
-        >
-          Organizations
-        </button>
-        {user?.role === 'president' && userOrg && (
-          <button
-            type="button"
-            onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
-            className="whitespace-nowrap shrink-0 rounded-full bg-white px-2 py-1 text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200"
-          >
-            {userOrg.shortName} Studio
-          </button>
-        )}
-        {user?.role === 'cessca' && (
-          <button
-            type="button"
-            onClick={() => onNavigate({ page: 'cessca' })}
-            className="whitespace-nowrap shrink-0 rounded-full bg-white px-2 py-1 text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200"
-          >
-            CESSCA Review
-          </button>
-        )}
-      </div>
+      {(user?.role === 'president' || user?.role === 'cessca') && (
+        <div className="md:hidden border-t border-stone-200/80 bg-stone-50/70 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs font-medium text-stone-600">
+          {user?.role === 'president' && userOrg && (
+            <button
+              type="button"
+              onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
+              className="whitespace-nowrap shrink-0 rounded-full bg-white px-2 py-1 text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200"
+            >
+              {userOrg.shortName} Studio
+            </button>
+          )}
+          {user?.role === 'cessca' && (
+            <button
+              type="button"
+              onClick={() => onNavigate({ page: 'cessca' })}
+              className="whitespace-nowrap shrink-0 rounded-full bg-white px-2 py-1 text-[#1E3A8A] font-semibold shadow-sm ring-1 ring-stone-200"
+            >
+              CESSCA Review
+            </button>
+          )}
+        </div>
+      )}
     </header>
   );
 }

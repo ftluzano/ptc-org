@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!data.user) {
           await signOut(auth);
           throw new Error(
-            'This Firebase account must have a verified email assigned to a PTC organization or CESSCA.'
+            'This Firebase account must have a verified email and an assigned UID for a PTC organization or CESSCA.'
           );
         }
         if (active) {
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signOut(auth);
       throw new Error(
         data.error ||
-          'This Firebase account must have a verified email assigned to a PTC organization or CESSCA.'
+          'This Firebase account must have a verified email and an assigned UID for a PTC organization or CESSCA.'
       );
     }
 

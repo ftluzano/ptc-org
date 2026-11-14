@@ -8,10 +8,8 @@ import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { createServer as createViteServer } from 'vite';
 import {
   ORGANIZATIONS,
-  CESSCA_ADMIN_EMAIL,
   CESSCA_ADMIN_NAME,
   getOrgByCode,
-  getOrgByEmail,
 } from './src/config/org-config.ts';
 import { getCentralDb, getOrgDb, initializeAllDatabases } from './src/lib/turso.ts';
 import type {
@@ -73,9 +71,23 @@ async function resolveFirebaseUser(token: string): Promise<AuthUser | null> {
   const email = decodedToken.email?.trim().toLowerCase();
   if (!email || !decodedToken.email_verified) return null;
 
-  if (email === CESSCA_ADMIN_EMAIL.toLowerCase()) {
+  const uid = decodedToken.uid;
+  const isCesscaUid = process.env.CESSCA_ADMIN_UID?.trim() === uid;
+  const matchingOrganizations = ORGANIZATIONS.filter(
+    (org) => process.env[org.uidEnvKey]?.trim() === uid
+  );
+  const matchingRoleCount = Number(isCesscaUid) + matchingOrganizations.length;
+
+  if (matchingRoleCount !== 1) {
+    if (matchingRoleCount > 1) {
+      console.error('A Firebase UID is assigned to multiple portal roles.');
+    }
+    return null;
+  }
+
+  if (isCesscaUid) {
     return {
-      uid: decodedToken.uid,
+      uid,
       email,
       displayName: CESSCA_ADMIN_NAME,
       role: 'cessca',
@@ -83,11 +95,11 @@ async function resolveFirebaseUser(token: string): Promise<AuthUser | null> {
     };
   }
 
-  const org = getOrgByEmail(email);
+  const org = matchingOrganizations[0];
   if (!org) return null;
   return {
-    uid: decodedToken.uid,
-    email: org.email,
+    uid,
+    email,
     displayName: org.president,
     role: 'president',
     orgCode: org.code,

@@ -21,7 +21,7 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
   const userOrg = user?.orgCode ? getOrgByCode(user.orgCode) : null;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-stone-200/80 bg-white/90 backdrop-blur-xl shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <header className="portal-header-enter sticky top-0 z-30 border-b border-stone-200/80 bg-white/90 backdrop-blur-xl shadow-[0_1px_0_rgba(15,23,42,0.04)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-8">
         <button
           type="button"

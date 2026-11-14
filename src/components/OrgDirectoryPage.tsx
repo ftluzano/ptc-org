@@ -34,13 +34,13 @@ export function OrgDirectoryPage({
   }, [organizations, searchQuery]);
 
   return (
-    <main className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+    <main className="portal-page-enter mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
       <section className="relative h-[230px] overflow-hidden rounded-[24px] bg-stone-200 shadow-[0_20px_44px_rgba(15,23,42,0.16)] sm:h-[300px] lg:h-[360px]">
         <img
           src={CAMPUS_HERO_IMAGE}
           alt="Pateros Technological College main building entrance"
           referrerPolicy="no-referrer"
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          className="portal-hero-drift absolute inset-0 h-full w-full object-cover object-center"
         />
       </section>
 
@@ -90,7 +90,7 @@ export function OrgDirectoryPage({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="portal-stagger grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredOrgs.map((org) => {
               const stats = statsByCode[org.code];
               const approvedCount = stats?.approvedCount ?? 0;

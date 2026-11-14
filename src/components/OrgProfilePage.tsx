@@ -310,7 +310,7 @@ export function OrgProfilePage({
   }
 
   return (
-    <main className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
+    <main className="portal-page-enter mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
       <div className="flex items-center justify-between gap-4">
         <button
           type="button"
@@ -318,7 +318,7 @@ export function OrgProfilePage({
           className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#1E3A8A] cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to All 12 Organizations</span>
+          <span>Back</span>
         </button>
 
         <span className="font-mono text-xs text-stone-500">/org/{org.code}</span>
@@ -850,14 +850,16 @@ export function OrgProfilePage({
                   )}
                 </div>
               ) : (
-                posts.map((post) => (
-                  <FacebookPostCard
-                    key={post.id}
-                    post={post}
-                    organizationImageUrl={organizationProfile.avatarDataUrl}
-                    onOpenLightbox={onOpenLightbox}
-                  />
-                ))
+                <div className="portal-stagger space-y-4">
+                  {posts.map((post) => (
+                    <FacebookPostCard
+                      key={post.id}
+                      post={post}
+                      organizationImageUrl={organizationProfile.avatarDataUrl}
+                      onOpenLightbox={onOpenLightbox}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}

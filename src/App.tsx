@@ -55,7 +55,10 @@ function PortalShell() {
     if (window.location.pathname !== targetPath) {
       window.history.pushState(null, '', targetPath);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? 'auto'
+      : 'smooth';
+    window.scrollTo({ top: 0, behavior });
   }, []);
 
   useEffect(() => {
@@ -105,7 +108,7 @@ function PortalShell() {
   const activeOrg = route.page === 'org' ? getOrgByCode(route.orgCode) : undefined;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F6F2] text-stone-900">
+    <div className="portal-shell min-h-screen flex flex-col text-stone-900">
       <TopBar
         route={route}
         onNavigate={navigate}
@@ -160,13 +163,13 @@ function PortalShell() {
       {/* Full-resolution Image Lightbox */}
       {lightbox && (
         <div
-          className="fixed inset-0 z-50 bg-stone-950/85 flex items-center justify-center p-4"
+          className="portal-modal-backdrop fixed inset-0 z-50 bg-stone-950/85 flex items-center justify-center p-4"
           onClick={() => setLightbox(null)}
           role="dialog"
           aria-modal="true"
         >
           <div
-            className="relative max-w-4xl w-full bg-stone-900 rounded-xl overflow-hidden shadow-2xl"
+            className="portal-modal-panel relative max-w-4xl w-full bg-stone-900 rounded-xl overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button

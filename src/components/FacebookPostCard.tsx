@@ -95,7 +95,7 @@ export function FacebookPostCard({
   }
 
   return (
-    <article className="overflow-hidden rounded-[22px] border border-stone-200 bg-white/90 shadow-[0_16px_28px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_44px_rgba(15,23,42,0.10)]">
+    <article className="portal-post-card overflow-hidden rounded-[22px] border border-stone-200 bg-white/90 shadow-[0_16px_28px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_44px_rgba(15,23,42,0.10)]">
       <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
         <div className="flex min-w-0 items-center gap-3">
           <OrgEmblem org={org} size="sm" imageUrl={organizationImageUrl} />

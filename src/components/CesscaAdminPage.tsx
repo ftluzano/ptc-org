@@ -148,7 +148,7 @@ export function CesscaAdminPage({
 
   if (user?.role !== 'cessca') {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <main className="portal-page-enter mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-6 text-center">
           <div className="w-12 h-12 rounded-xl bg-[#1E3A8A]/10 text-[#1E3A8A] flex items-center justify-center mx-auto">
             <ShieldCheck className="w-6 h-6" />
@@ -175,7 +175,7 @@ export function CesscaAdminPage({
   const selectedImgUrl = resolvePostImageUrl(selectedItem?.imageUrl);
 
   return (
-    <main className="mx-auto max-w-7xl space-y-4 px-4 py-5 sm:px-6 sm:py-6">
+    <main className="portal-page-enter mx-auto max-w-7xl space-y-4 px-4 py-5 sm:px-6 sm:py-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <div className="text-xs uppercase tracking-widest text-stone-500 font-medium">
@@ -199,7 +199,7 @@ export function CesscaAdminPage({
       </div>
 
       {/* Summary KPI Strip */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="portal-stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className="rounded-xl border border-stone-200 bg-white p-3">
           <div className="text-xs text-stone-500">Pending Review</div>
           <div className="font-mono text-2xl font-semibold text-amber-700 tabular-nums mt-1">

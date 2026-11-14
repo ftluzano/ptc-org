@@ -75,13 +75,13 @@
   html {
     font-family: var(--font-sans);
     scroll-behavior: auto;
-    background: linear-gradient(180deg, #f8fafc 0%, #f7f6f2 100%);
+    background: linear-gradient(180deg, #e7eeff 0%, #eef3ff 52%, #e7eefb 100%);
   }
 
   body {
     margin: 0;
     min-height: 100vh;
-    background: linear-gradient(180deg, #f8fafc 0%, #f7f6f2 100%);
+    background: linear-gradient(180deg, #e7eeff 0%, #eef3ff 52%, #e7eefb 100%);
     color: var(--text-strong);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -112,9 +112,7 @@
 }
 
 .portal-shell {
-  background:
-    radial-gradient(64rem 28rem at 50% -10%, rgba(30, 58, 138, 0.045), transparent 72%),
-    linear-gradient(180deg, #f7f8fb 0%, #f7f6f2 54%, #f3f1ec 100%);
+  background: linear-gradient(180deg, #e7eeff 0%, #eef3ff 52%, #e7eefb 100%);
   background-attachment: fixed;
 }
 

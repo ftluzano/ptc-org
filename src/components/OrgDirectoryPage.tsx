@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowDown, ArrowRight, Megaphone, Search } from 'lucide-react';
 import type { OrganizationConfig } from '../config/org-config';
 import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
 import type { OrgStats } from '../types/portal';
@@ -10,6 +10,7 @@ interface OrgDirectoryPageProps {
   statsByCode: Record<string, OrgStats>;
   loading: boolean;
   onSelectOrg: (orgCode: string) => void;
+  onOpenFeed: () => void;
 }
 
 export function OrgDirectoryPage({
@@ -17,6 +18,7 @@ export function OrgDirectoryPage({
   statsByCode,
   loading,
   onSelectOrg,
+  onOpenFeed,
 }: OrgDirectoryPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -35,13 +37,61 @@ export function OrgDirectoryPage({
 
   return (
     <main className="portal-page-enter mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
-      <section className="relative h-[230px] overflow-hidden rounded-[24px] bg-stone-200 shadow-[0_20px_44px_rgba(15,23,42,0.16)] sm:h-[300px] lg:h-[360px]">
+      <section className="relative isolate min-h-[390px] overflow-hidden rounded-[24px] bg-[#172554] shadow-[0_24px_54px_rgba(15,23,42,0.2)] sm:min-h-[440px] lg:min-h-[480px]">
         <img
           src={CAMPUS_HERO_IMAGE}
           alt="Pateros Technological College main building entrance"
           referrerPolicy="no-referrer"
           className="portal-hero-drift absolute inset-0 h-full w-full object-cover object-center"
         />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-r from-[#101c3c]/95 via-[#172554]/75 to-[#172554]/10"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-t from-[#101c3c]/45 via-transparent to-transparent"
+        />
+        <div className="relative z-10 flex min-h-[390px] items-center px-6 py-10 sm:min-h-[440px] sm:px-10 lg:min-h-[480px] lg:px-14">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-50 backdrop-blur-sm sm:text-xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+              Pateros Technological College · Student Life
+            </div>
+            <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Find your people.
+              <span className="mt-1 block text-blue-100">Shape your campus.</span>
+            </h1>
+            <p className="mt-5 max-w-xl text-sm leading-6 text-blue-50/90 sm:text-base sm:leading-7">
+              Discover the official PTC organizations, explore your interests, and find a community
+              to grow with.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <a
+                href="#org-directory"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#172554] shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#172554]"
+              >
+                Explore organizations
+                <ArrowDown className="h-4 w-4" />
+              </a>
+              <button
+                type="button"
+                onClick={onOpenFeed}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <Megaphone className="h-4 w-4" />
+                Campus announcements
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="absolute bottom-7 right-7 z-10 hidden rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-white shadow-xl backdrop-blur-md lg:block">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-4xl font-semibold">{organizations.length}</span>
+            <span className="text-xs font-medium text-blue-50">official organizations</span>
+          </div>
+          <p className="mt-1 text-xs text-blue-100/85">One campus. Many ways to belong.</p>
+        </div>
       </section>
 
       <section id="org-directory" className="scroll-mt-24 space-y-5">

@@ -501,12 +501,12 @@ export function OrgProfilePage({
       </div>
 
       <section className="overflow-hidden rounded-[20px] border border-stone-200 bg-white shadow-[0_22px_40px_rgba(15,23,42,0.08)] sm:rounded-[26px]">
-        <div className="relative aspect-[13/5] overflow-hidden rounded-t-[19px] bg-stone-100 sm:rounded-t-[25px]">
+        <div className="relative h-36 overflow-hidden rounded-t-[19px] bg-stone-100 sm:h-52 sm:rounded-t-[25px]">
           <img
             src={organizationProfile.bannerDataUrl || CAMPUS_HERO_IMAGE}
             alt={`${displayOrg.fullName} cover`}
             referrerPolicy="no-referrer"
-            className="h-full w-full object-contain"
+            className="h-full w-full object-cover"
           />
         </div>
 
@@ -788,7 +788,7 @@ export function OrgProfilePage({
                           : organizationProfile.bannerDataUrl || CAMPUS_HERO_IMAGE
                       }
                       alt={`${displayOrg.fullName} banner preview`}
-                      className="aspect-[13/5] w-full bg-stone-100 object-contain"
+                      className="h-36 w-full object-cover"
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-3">

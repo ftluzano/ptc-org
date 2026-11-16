@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
 import type { OrganizationConfig } from '../config/org-config';
-import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
 import type { OrgStats } from '../types/portal';
 import { OrgEmblem } from './OrgEmblem';
 
@@ -34,51 +33,6 @@ export function OrgDirectoryPage({
 
   return (
     <main className="portal-page-enter mx-auto max-w-7xl space-y-6 px-3 py-4 sm:space-y-8 sm:px-6 sm:py-8">
-      <section className="relative isolate min-h-[340px] overflow-hidden rounded-[20px] bg-[#14532d] shadow-[0_24px_54px_rgba(15,23,42,0.2)] sm:min-h-[440px] sm:rounded-[24px] lg:min-h-[480px]">
-        <img
-          src={CAMPUS_HERO_IMAGE}
-          alt="Pateros Technological College main building entrance"
-          referrerPolicy="no-referrer"
-          className="portal-hero-drift absolute inset-0 h-full w-full object-cover object-center"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-[#052e16]/95 via-[#14532d]/75 to-[#14532d]/10"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-[#052e16]/45 via-transparent to-transparent"
-        />
-        <div className="relative z-10 flex min-h-[340px] items-center px-5 py-8 sm:min-h-[440px] sm:px-10 sm:py-10 lg:min-h-[480px] lg:px-14">
-          <div className="max-w-2xl">
-            <h1 className="font-display text-3xl font-semibold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Find your people.
-              <span className="mt-1 block text-yellow-300">Shape your campus.</span>
-            </h1>
-            <p className="mt-4 max-w-xl text-sm leading-5 text-green-50/90 sm:mt-5 sm:text-base sm:leading-7">
-              Discover the official PTC organizations, explore your interests, and find a community
-              to grow with.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3 sm:mt-7">
-              <a
-                href="#org-directory"
-                className="inline-flex items-center gap-2 rounded-xl bg-yellow-300 px-4 py-2.5 text-xs font-semibold text-green-950 shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-yellow-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#14532d] sm:px-5 sm:py-3 sm:text-sm"
-              >
-                Explore organizations
-                <ArrowDown className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-        </div>
-        <div className="absolute bottom-7 right-7 z-10 hidden rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-white shadow-xl backdrop-blur-md lg:block">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-4xl font-semibold">{organizations.length}</span>
-            <span className="text-xs font-medium text-green-50">official organizations</span>
-          </div>
-          <p className="mt-1 text-xs text-yellow-100/90">One campus. Many ways to belong.</p>
-        </div>
-      </section>
-
       <section id="org-directory" className="scroll-mt-20 space-y-4 sm:scroll-mt-24 sm:space-y-5">
         <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Info, LogIn, LogOut, ShieldCheck, UserCheck, Users } from 'lucide-react';
+import { LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
 import ptcLogo from '../assets/images/ptc logo.png';
 import { useAuth } from '../hooks/useAuth';
 import { getOrgByCode } from '../config/org-config';
@@ -38,19 +38,18 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
 
         <nav
           aria-label="Main navigation"
-          className="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto text-[10px] font-medium text-stone-600 sm:gap-1.5 sm:text-xs"
+          className="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto text-xs font-semibold text-stone-600 sm:gap-1.5 sm:text-sm"
         >
           <button
             type="button"
             onClick={() => onNavigate({ page: 'home' })}
             aria-current={route.page === 'home' ? 'page' : undefined}
-            className={`inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-2 transition-colors sm:gap-1.5 sm:px-3 ${
+            className={`inline-flex shrink-0 items-center rounded-lg px-2 py-2 transition-colors sm:px-3 ${
               route.page === 'home'
                 ? 'bg-emerald-800 text-white'
                 : 'text-stone-700 hover:bg-stone-200'
             }`}
           >
-            <Home className="h-3.5 w-3.5" />
             Home
           </button>
           <button
@@ -59,26 +58,24 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
             aria-current={
               route.page === 'organizations' || route.page === 'org' ? 'page' : undefined
             }
-            className={`inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-2 transition-colors sm:gap-1.5 sm:px-3 ${
+            className={`inline-flex shrink-0 items-center rounded-lg px-2 py-2 transition-colors sm:px-3 ${
               route.page === 'organizations' || route.page === 'org'
                 ? 'bg-emerald-800 text-white'
                 : 'text-stone-700 hover:bg-stone-200'
             }`}
           >
-            <Users className="h-3.5 w-3.5" />
             Organizations
           </button>
           <button
             type="button"
             onClick={() => onNavigate({ page: 'about' })}
             aria-current={route.page === 'about' ? 'page' : undefined}
-            className={`inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-2 transition-colors sm:gap-1.5 sm:px-3 ${
+            className={`inline-flex shrink-0 items-center rounded-lg px-2 py-2 transition-colors sm:px-3 ${
               route.page === 'about'
                 ? 'bg-emerald-800 text-white'
                 : 'text-stone-700 hover:bg-stone-200'
             }`}
           >
-            <Info className="h-3.5 w-3.5" />
             About PTC
           </button>
           {user?.role === 'president' && userOrg && (

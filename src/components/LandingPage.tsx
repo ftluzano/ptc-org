@@ -13,10 +13,10 @@ import studentLifeImage from '../assets/images/ptc-student-life.png';
 import visionImage from '../assets/images/ptc-vision.png';
 
 const landingImages = [
-  { src: visionImage, alt: 'Pateros Technological College vision statement' },
-  { src: missionImage, alt: 'Pateros Technological College mission statement' },
-  { src: campusLifeImage, alt: 'Students at the entrance of Pateros Technological College' },
-  { src: studentLifeImage, alt: 'Close-up of a student wearing glasses on campus' },
+  { src: visionImage, alt: 'Pateros Technological College vision statement', trimEdge: true },
+  { src: missionImage, alt: 'Pateros Technological College mission statement', trimEdge: true },
+  { src: campusLifeImage, alt: 'Students at the entrance of Pateros Technological College', trimEdge: false },
+  { src: studentLifeImage, alt: 'Close-up of a student wearing glasses on campus', trimEdge: false },
 ];
 
 const ptcHistory = [
@@ -53,10 +53,11 @@ const formerAdministrators = [
 ];
 
 interface LandingPageProps {
+  showAbout?: boolean;
   scrollToAbout?: boolean;
 }
 
-export function LandingPage({ scrollToAbout = false }: LandingPageProps) {
+export function LandingPage({ showAbout = false, scrollToAbout = false }: LandingPageProps) {
   React.useEffect(() => {
     if (!scrollToAbout) return;
     const frameId = window.requestAnimationFrame(() => {
@@ -84,11 +85,12 @@ export function LandingPage({ scrollToAbout = false }: LandingPageProps) {
         />
       </section>
 
-      <section
-        id="about-ptc"
-        aria-label="About Pateros Technological College"
-        className="scroll-mt-24 space-y-4 sm:space-y-5"
-      >
+      {showAbout && (
+        <section
+          id="about-ptc"
+          aria-label="About Pateros Technological College"
+          className="scroll-mt-24 space-y-4 sm:space-y-5"
+        >
         <div>
           <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
             About PTC
@@ -163,13 +165,14 @@ export function LandingPage({ scrollToAbout = false }: LandingPageProps) {
               <img
                 src={image.src}
                 alt={image.alt}
-                className="h-full w-full object-fill"
+                className={`h-full w-full object-fill ${image.trimEdge ? 'scale-[1.02]' : ''}`}
                 loading="lazy"
               />
             </figure>
           ))}
         </div>
       </section>
+      )}
     </main>
   );
 }

@@ -72,13 +72,6 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
 
         <div className="grid gap-4 p-4 sm:gap-6 sm:p-6 md:grid-cols-12">
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:col-span-5">
-            <div>
-              <h3 className="text-sm font-semibold text-stone-900">Account Credentials</h3>
-              <p className="mt-1 text-xs text-stone-500">
-                Select your account, then enter your email and Firebase password.
-              </p>
-            </div>
-
             {error && (
               <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />

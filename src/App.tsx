@@ -5,6 +5,7 @@ import { AuthProvider } from './hooks/useAuth';
 import { useLiveUpdates } from './hooks/useLiveUpdates';
 import type { AuthUser, OrganizationProfile, OrgStats } from './types/portal';
 import { TopBar, type ActiveRoute } from './components/TopBar';
+import { LandingPage } from './components/LandingPage';
 import { OrgDirectoryPage } from './components/OrgDirectoryPage';
 import { OrgProfilePage } from './components/OrgProfilePage';
 import { GlobalFeedPage } from './components/GlobalFeedPage';
@@ -13,6 +14,9 @@ import { LoginModal } from './components/LoginModal';
 
 function parseRouteFromLocation(): ActiveRoute {
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (pathname === '/organizations') {
+    return { page: 'organizations' };
+  }
   if (pathname === '/feed') {
     return { page: 'feed' };
   }
@@ -26,13 +30,15 @@ function parseRouteFromLocation(): ActiveRoute {
       return { page: 'org', orgCode: org.code };
     }
   }
-  return { page: 'directory' };
+  return { page: 'home' };
 }
 
 function routeToPath(route: ActiveRoute): string {
   switch (route.page) {
-    case 'directory':
+    case 'home':
       return '/';
+    case 'organizations':
+      return '/organizations';
     case 'org':
       return `/org/${route.orgCode}`;
     case 'feed':
@@ -150,7 +156,9 @@ function PortalShell() {
       />
 
       <div className="flex-1">
-        {route.page === 'directory' && (
+        {route.page === 'home' && <LandingPage />}
+
+        {route.page === 'organizations' && (
           <OrgDirectoryPage
             organizations={organizations}
             statsByCode={statsByCode}
@@ -162,7 +170,7 @@ function PortalShell() {
           <OrgProfilePage
             org={activeOrg}
             organizations={organizations}
-            onBackToDirectory={() => navigate({ page: 'directory' })}
+            onBackToDirectory={() => navigate({ page: 'organizations' })}
             onSelectOrg={(code) => navigate({ page: 'org', orgCode: code })}
             onOpenLogin={() => setLoginOpen(true)}
             onOpenLightbox={(imageUrl, caption) => setLightbox({ imageUrl, caption })}
@@ -172,7 +180,7 @@ function PortalShell() {
 
         {route.page === 'feed' && (
           <GlobalFeedPage
-            onBackToDirectory={() => navigate({ page: 'directory' })}
+            onBackToDirectory={() => navigate({ page: 'organizations' })}
             onSelectOrg={(code) => navigate({ page: 'org', orgCode: code })}
             onOpenLightbox={(imageUrl, caption) => setLightbox({ imageUrl, caption })}
           />

@@ -1,11 +1,12 @@
 import React from 'react';
-import { LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
+import { Home, LogIn, LogOut, ShieldCheck, UserCheck, Users } from 'lucide-react';
 import ptcLogo from '../assets/images/ptc logo.png';
 import { useAuth } from '../hooks/useAuth';
 import { getOrgByCode } from '../config/org-config';
 
 export type ActiveRoute =
-  | { page: 'directory' }
+  | { page: 'home' }
+  | { page: 'organizations' }
   | { page: 'org'; orgCode: string }
   | { page: 'feed' }
   | { page: 'cessca' };
@@ -25,7 +26,7 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:h-16 sm:gap-8 sm:px-6">
         <button
           type="button"
-          onClick={() => onNavigate({ page: 'directory' })}
+          onClick={() => onNavigate({ page: 'home' })}
           className="group inline-flex min-w-0 items-center gap-2 shrink cursor-pointer sm:shrink-0 sm:gap-2.5"
         >
           <img src={ptcLogo} alt="Pateros Technological College seal" className="h-8 w-8 shrink-0 object-contain sm:h-10 sm:w-10" />
@@ -36,38 +37,6 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
             PTC Student Orgs
           </span>
         </button>
-
-        {(user?.role === 'president' || user?.role === 'cessca') && (
-          <nav className="hidden md:flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50/80 p-1 text-sm font-medium text-stone-600 shadow-inner shadow-stone-100">
-            {user?.role === 'president' && userOrg && (
-              <button
-                type="button"
-                onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
-                className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
-                  route.page === 'org' && route.orgCode === userOrg.code
-                    ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
-                    : 'hover:text-stone-900'
-                }`}
-              >
-                {userOrg.shortName} Studio
-              </button>
-            )}
-
-            {user?.role === 'cessca' && (
-              <button
-                type="button"
-                onClick={() => onNavigate({ page: 'cessca' })}
-                className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
-                  route.page === 'cessca'
-                    ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200'
-                    : 'hover:text-stone-900'
-                }`}
-              >
-                CESSCA Review
-              </button>
-            )}
-          </nav>
-        )}
 
         <div className="flex items-center shrink-0">
           {user ? (
@@ -100,28 +69,65 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
         </div>
       </div>
 
-      {(user?.role === 'president' || user?.role === 'cessca') && (
-        <div className="flex items-center gap-2 overflow-x-auto border-t border-stone-200/80 bg-stone-50/70 px-3 py-1.5 text-[11px] font-medium text-stone-600 md:hidden">
-          {user?.role === 'president' && userOrg && (
-            <button
-              type="button"
-              onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
-              className="whitespace-nowrap shrink-0 rounded-full bg-white px-2 py-1 text-[#166534] font-semibold shadow-sm ring-1 ring-stone-200"
-            >
-              {userOrg.shortName} Studio
-            </button>
-          )}
-          {user?.role === 'cessca' && (
-            <button
-              type="button"
-              onClick={() => onNavigate({ page: 'cessca' })}
-              className="whitespace-nowrap shrink-0 rounded-full bg-white px-2 py-1 text-[#166534] font-semibold shadow-sm ring-1 ring-stone-200"
-            >
-              CESSCA Review
-            </button>
-          )}
-        </div>
-      )}
+      <nav
+        aria-label="Main navigation"
+        className="flex items-center gap-1 overflow-x-auto border-t border-stone-200/80 bg-stone-50/70 px-3 py-1.5 text-xs font-medium text-stone-600 sm:gap-2 sm:px-6"
+      >
+        <button
+          type="button"
+          onClick={() => onNavigate({ page: 'home' })}
+          aria-current={route.page === 'home' ? 'page' : undefined}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 transition-colors ${
+            route.page === 'home'
+              ? 'bg-emerald-800 text-white'
+              : 'text-stone-700 hover:bg-stone-200'
+          }`}
+        >
+          <Home className="h-3.5 w-3.5" />
+          Home
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate({ page: 'organizations' })}
+          aria-current={
+            route.page === 'organizations' || route.page === 'org' ? 'page' : undefined
+          }
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 transition-colors ${
+            route.page === 'organizations' || route.page === 'org'
+              ? 'bg-emerald-800 text-white'
+              : 'text-stone-700 hover:bg-stone-200'
+          }`}
+        >
+          <Users className="h-3.5 w-3.5" />
+          Organizations
+        </button>
+        {(user?.role === 'president' && userOrg) && (
+          <button
+            type="button"
+            onClick={() => onNavigate({ page: 'org', orgCode: userOrg.code })}
+            className={`shrink-0 rounded-lg px-3 py-2 transition-colors ${
+              route.page === 'org' && route.orgCode === userOrg.code
+                ? 'bg-emerald-800 text-white'
+                : 'text-stone-700 hover:bg-stone-200'
+            }`}
+          >
+            {userOrg.shortName} Studio
+          </button>
+        )}
+        {user?.role === 'cessca' && (
+          <button
+            type="button"
+            onClick={() => onNavigate({ page: 'cessca' })}
+            className={`shrink-0 rounded-lg px-3 py-2 transition-colors ${
+              route.page === 'cessca'
+                ? 'bg-emerald-800 text-white'
+                : 'text-stone-700 hover:bg-stone-200'
+            }`}
+          >
+            CESSCA Review
+          </button>
+        )}
+      </nav>
     </header>
   );
 }

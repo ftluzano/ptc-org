@@ -42,15 +42,15 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
         >
           <button
             type="button"
-            onClick={() => onNavigate({ page: 'home' })}
-            aria-current={route.page === 'home' ? 'page' : undefined}
+            onClick={() => onNavigate({ page: 'about' })}
+            aria-current={route.page === 'about' ? 'page' : undefined}
             className={`inline-flex shrink-0 items-center rounded-lg px-2 py-2 transition-colors sm:px-3 ${
-              route.page === 'home'
+              route.page === 'about'
                 ? 'bg-emerald-800 text-white'
                 : 'text-stone-700 hover:bg-stone-200'
             }`}
           >
-            Home
+            About PTC
           </button>
           <button
             type="button"
@@ -65,18 +65,6 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
             }`}
           >
             Organizations
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate({ page: 'about' })}
-            aria-current={route.page === 'about' ? 'page' : undefined}
-            className={`inline-flex shrink-0 items-center rounded-lg px-2 py-2 transition-colors sm:px-3 ${
-              route.page === 'about'
-                ? 'bg-emerald-800 text-white'
-                : 'text-stone-700 hover:bg-stone-200'
-            }`}
-          >
-            About PTC
           </button>
           {user?.role === 'president' && userOrg && (
             <button

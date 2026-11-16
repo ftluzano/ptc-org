@@ -73,17 +73,19 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
 
   return (
     <main className="portal-page-enter mx-auto max-w-7xl space-y-6 px-3 py-4 sm:space-y-8 sm:px-6 sm:py-8">
-      <section
-        aria-label="Pateros Technological College campus"
-        className="relative h-[260px] overflow-hidden rounded-[20px] bg-emerald-950 shadow-[0_24px_54px_rgba(15,23,42,0.18)] sm:h-[380px] sm:rounded-[24px] lg:h-[460px]"
-      >
-        <img
-          src={CAMPUS_HERO_IMAGE}
-          alt="Pateros Technological College campus banner"
-          referrerPolicy="no-referrer"
-          className="portal-hero-drift absolute inset-0 h-full w-full object-cover object-center"
-        />
-      </section>
+      {!showAbout && (
+        <section
+          aria-label="Pateros Technological College campus"
+          className="relative h-[260px] overflow-hidden rounded-[20px] bg-emerald-950 shadow-[0_24px_54px_rgba(15,23,42,0.18)] sm:h-[380px] sm:rounded-[24px] lg:h-[460px]"
+        >
+          <img
+            src={CAMPUS_HERO_IMAGE}
+            alt="Pateros Technological College campus banner"
+            referrerPolicy="no-referrer"
+            className="portal-hero-drift absolute inset-0 h-full w-full object-cover object-center"
+          />
+        </section>
+      )}
 
       {showAbout && (
         <section
@@ -128,9 +130,6 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
                 LPT, RGC, CSASS
-              </p>
-              <p className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                President · 2017–Present
               </p>
             </div>
           </article>

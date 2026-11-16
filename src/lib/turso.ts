@@ -145,6 +145,23 @@ async function initializeDatabases() {
           version INTEGER NOT NULL
         )
       `);
+      await central.execute(`
+        CREATE TABLE IF NOT EXISTS proposal_submissions (
+          id TEXT PRIMARY KEY,
+          org_code TEXT NOT NULL,
+          org_short_name TEXT NOT NULL,
+          org_full_name TEXT NOT NULL,
+          president_name TEXT NOT NULL,
+          submitted_by_uid TEXT NOT NULL,
+          title TEXT NOT NULL,
+          message TEXT NOT NULL,
+          file_name TEXT NOT NULL,
+          pathname TEXT NOT NULL,
+          content_type TEXT NOT NULL,
+          file_size INTEGER NOT NULL,
+          submitted_at TEXT NOT NULL
+        )
+      `);
       await central.execute(
         'INSERT OR IGNORE INTO portal_live_version (id, version) VALUES (1, 0)'
       );

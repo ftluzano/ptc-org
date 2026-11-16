@@ -1,5 +1,8 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import crypto from 'node:crypto';
+import { Readable } from 'node:stream';
+import { del as deleteBlob, get as getBlob, head as headBlob } from '@vercel/blob';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { cert, getApps, initializeApp, type ServiceAccount } from 'firebase-admin/app';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import {
@@ -12,8 +15,11 @@ import type {
   AuthUser,
   OrganizationProfile,
   OrgPost,
+  ProposalSubmission,
   SubmissionQueueItem,
 } from '../types/portal.ts';
+
+const MAX_PROPOSAL_SIZE_BYTES = 25 * 1024 * 1024;
 
 interface AuthenticatedRequest extends Request {
   authUser?: AuthUser | null;
@@ -238,6 +244,34 @@ function mapRowToQueueItem(row: Record<string, unknown>): SubmissionQueueItem {
     reviewedAt: row.reviewed_at ? String(row.reviewed_at) : null,
     reviewedBy: row.reviewed_by ? String(row.reviewed_by) : null,
   };
+}
+
+function mapRowToProposal(row: Record<string, unknown>): ProposalSubmission {
+  return {
+    id: String(row.id),
+    orgCode: String(row.org_code),
+    orgShortName: String(row.org_short_name),
+    orgFullName: String(row.org_full_name),
+    presidentName: String(row.president_name),
+    title: String(row.title),
+    message: String(row.message),
+    fileName: String(row.file_name),
+    contentType: String(row.content_type),
+    fileSize: Number(row.file_size),
+    submittedAt: String(row.submitted_at),
+  };
+}
+
+function safeDownloadName(fileName: string): string {
+  return fileName.replace(/[\r\n"\\/]/g, '_').slice(0, 255) || 'proposal-file';
+}
+
+function isValidProposalPath(pathname: string, requiredPrefix: string): boolean {
+  return (
+    pathname.startsWith(requiredPrefix) &&
+    !pathname.split('/').some((segment) => segment === '.' || segment === '..') &&
+    !pathname.includes('\\')
+  );
 }
 
 export async function createApiApp() {
@@ -633,7 +667,7 @@ export async function createApiApp() {
     }
   });
 
-  // Officer-only: Submit new event post as Pending Letter/Request to CESSCA
+  // Organization officers publish announcements immediately to their public feeds.
   app.post('/api/organizations/:code/posts', async (req: AuthenticatedRequest, res: Response) => {
     try {
       const org = getOrgByCode(String(req.params.code));
@@ -642,11 +676,11 @@ export async function createApiApp() {
       }
       const user = req.authUser;
       if (!user) {
-        return res.status(401).json({ error: 'Please sign in as an organization officer to submit posts.' });
+        return res.status(401).json({ error: 'Please sign in as this organization’s officer to publish.' });
       }
       if (user.role !== 'president' || user.orgCode !== org.code) {
         return res.status(403).json({
-          error: `Only ${org.president} (${org.shortName}) can submit event requests for this organization.`,
+          error: `Only this organization’s officer can publish announcements.`,
         });
       }
 
@@ -667,38 +701,16 @@ export async function createApiApp() {
 
       const id = `post_${org.code}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
       const randomNum = Math.floor(1000 + Math.random() * 9000);
-      const letterRef = `LTR-2026-${randomNum}`;
+      const letterRef = `POST-${new Date().getFullYear()}-${randomNum}`;
       const now = new Date().toISOString();
       const names = await getOrganizationNames(org.code);
 
-      // 1. Save into the organization's dedicated libSQL database with status: 'pending'
       const orgDb = getOrgDb(org.code);
       await orgDb.execute({
         sql: `INSERT INTO posts (
           id, letter_ref, org_code, author_name, title, event_date, caption, image_url, status, feedback, likes_count, created_at, reviewed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, 0, ?, NULL)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved', NULL, 0, ?, NULL)`,
         args: [id, letterRef, org.code, names.presidentName, title, eventDate, caption, imageUrl, now],
-      });
-
-      // 2. Queue reference into the central CESSCA moderation database
-      const centralDb = getCentralDb();
-      await centralDb.execute({
-        sql: `INSERT INTO cessca_queue (
-          id, letter_ref, org_code, org_short_name, org_full_name, president_name, title, event_date, caption, image_url, status, feedback, submitted_at, reviewed_at, reviewed_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, ?, NULL, NULL)`,
-        args: [
-          id,
-          letterRef,
-          org.code,
-          names.shortName,
-          names.fullName,
-          names.presidentName,
-          title,
-          eventDate,
-          caption,
-          imageUrl,
-          now,
-        ],
       });
 
       await incrementPortalLiveVersion();
@@ -714,7 +726,7 @@ export async function createApiApp() {
           eventDate,
           caption,
           imageUrl,
-          status: 'pending',
+          status: 'approved',
           feedback: null,
           likesCount: 0,
           createdAt: now,
@@ -723,7 +735,7 @@ export async function createApiApp() {
       });
     } catch (error) {
       console.error('Failed to submit post:', error);
-      return res.status(500).json({ error: 'Failed to submit event letter.' });
+      return res.status(500).json({ error: 'Failed to publish announcement.' });
     }
   });
 
@@ -770,6 +782,206 @@ export async function createApiApp() {
     } catch (error) {
       console.error('Failed to delete post:', error);
       return res.status(500).json({ error: 'Failed to delete submission.' });
+    }
+  });
+
+  app.post('/api/proposals/upload', async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const body = req.body as HandleUploadBody;
+      const result = await handleUpload({
+        body,
+        request: req,
+        onBeforeGenerateToken: async (pathname) => {
+          const user = req.authUser;
+          if (!user || user.role !== 'president' || !user.orgCode) {
+            throw new Error('Only an authenticated organization officer may upload proposal files.');
+          }
+          const requiredPrefix = `proposals/${user.orgCode}/${user.uid}/`;
+          if (!isValidProposalPath(pathname, requiredPrefix)) {
+            throw new Error('Invalid proposal upload path.');
+          }
+          return {
+            maximumSizeInBytes: MAX_PROPOSAL_SIZE_BYTES,
+            addRandomSuffix: true,
+          };
+        },
+      });
+      return res.json(result);
+    } catch (error) {
+      console.error('Proposal upload authorization failed:', error);
+      return res.status(400).json({
+        error: error instanceof Error ? error.message : 'Unable to authorize this proposal upload.',
+      });
+    }
+  });
+
+  app.post('/api/proposals', async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const user = req.authUser;
+      if (!user || user.role !== 'president' || !user.orgCode) {
+        return res.status(403).json({ error: 'Only an authenticated organization officer may submit a proposal.' });
+      }
+
+      const org = getOrgByCode(user.orgCode);
+      if (!org) {
+        return res.status(403).json({ error: 'Your officer account is not assigned to a valid organization.' });
+      }
+      const title = String(req.body?.title ?? '').trim();
+      const message = String(req.body?.message ?? '').trim();
+      const submittedFileName = String(req.body?.fileName ?? '').trim();
+      const fileName = safeDownloadName(submittedFileName);
+      const pathname = String(req.body?.pathname ?? '').trim();
+      const expectedPrefix = `proposals/${org.code}/${user.uid}/`;
+
+      if (title.length < 3 || title.length > 160) {
+        return res.status(400).json({ error: 'Proposal title must be between 3 and 160 characters.' });
+      }
+      if (message.length > 2000) {
+        return res.status(400).json({ error: 'Proposal message must be 2000 characters or fewer.' });
+      }
+      if (!submittedFileName || submittedFileName.length > 255) {
+        return res.status(400).json({ error: 'Choose a file with a valid name.' });
+      }
+      if (!isValidProposalPath(pathname, expectedPrefix)) {
+        return res.status(400).json({ error: 'The uploaded file does not belong to this organization officer.' });
+      }
+
+      const blob = await headBlob(pathname);
+      if (blob.size <= 0 || blob.size > MAX_PROPOSAL_SIZE_BYTES) {
+        return res.status(400).json({ error: 'Proposal files must be larger than 0 bytes and no larger than 25 MB.' });
+      }
+
+      const id = `proposal_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+      const submittedAt = new Date().toISOString();
+      const names = await getOrganizationNames(org.code);
+      try {
+        await getCentralDb().execute({
+          sql: `INSERT INTO proposal_submissions (
+            id, org_code, org_short_name, org_full_name, president_name, submitted_by_uid,
+            title, message, file_name, pathname, content_type, file_size, submitted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            id,
+            org.code,
+            names.shortName,
+            names.fullName,
+            names.presidentName,
+            user.uid,
+            title,
+            message,
+            fileName,
+            pathname,
+            blob.contentType || 'application/octet-stream',
+            blob.size,
+            submittedAt,
+          ],
+        });
+      } catch (error) {
+        try {
+          await deleteBlob(pathname);
+        } catch (cleanupError) {
+          console.error('Failed to clean up an unrecorded proposal blob:', cleanupError);
+        }
+        throw error;
+      }
+      await incrementPortalLiveVersion();
+      return res.status(201).json({
+        proposal: {
+          id,
+          orgCode: org.code,
+          orgShortName: names.shortName,
+          orgFullName: names.fullName,
+          presidentName: names.presidentName,
+          title,
+          message,
+          fileName,
+          contentType: blob.contentType || 'application/octet-stream',
+          fileSize: blob.size,
+          submittedAt,
+        } satisfies ProposalSubmission,
+      });
+    } catch (error) {
+      console.error('Failed to save proposal submission:', error);
+      return res.status(500).json({ error: 'Failed to send proposal to CESSCA.' });
+    }
+  });
+
+  app.get('/api/cessca/proposals', async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (req.authUser?.role !== 'cessca') {
+        return res.status(403).json({ error: 'CESSCA administrator privileges required.' });
+      }
+      const result = await getCentralDb().execute(
+        'SELECT * FROM proposal_submissions ORDER BY submitted_at DESC'
+      );
+      return res.json({
+        proposals: result.rows.map((row) =>
+          mapRowToProposal(row as unknown as Record<string, unknown>)
+        ),
+      });
+    } catch (error) {
+      console.error('Failed to load proposal submissions:', error);
+      return res.status(500).json({ error: 'Failed to load proposal files.' });
+    }
+  });
+
+  app.get('/api/cessca/proposals/:id/file', async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (req.authUser?.role !== 'cessca') {
+        return res.status(403).json({ error: 'CESSCA administrator privileges required.' });
+      }
+      const result = await getCentralDb().execute({
+        sql: 'SELECT file_name, pathname FROM proposal_submissions WHERE id = ? LIMIT 1',
+        args: [String(req.params.id)],
+      });
+      const row = result.rows[0];
+      if (!row) {
+        return res.status(404).json({ error: 'Proposal file not found.' });
+      }
+      const blob = await getBlob(String(row.pathname), { access: 'private' });
+      if (!blob || blob.statusCode !== 200) {
+        return res.status(404).json({ error: 'The stored proposal file is no longer available.' });
+      }
+      const fileName = safeDownloadName(String(row.file_name));
+      const fallbackFileName = fileName.replace(/[^\x20-\x7E]/g, '_');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${fallbackFileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cache-Control', 'private, no-store');
+      return Readable.fromWeb(
+        blob.stream as Parameters<typeof Readable.fromWeb>[0]
+      ).pipe(res);
+    } catch (error) {
+      console.error('Failed to download proposal file:', error);
+      return res.status(500).json({ error: 'Failed to download proposal file.' });
+    }
+  });
+
+  app.delete('/api/cessca/proposals/:id', async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (req.authUser?.role !== 'cessca') {
+        return res.status(403).json({ error: 'CESSCA administrator privileges required.' });
+      }
+      const central = getCentralDb();
+      const result = await central.execute({
+        sql: 'SELECT pathname FROM proposal_submissions WHERE id = ? LIMIT 1',
+        args: [String(req.params.id)],
+      });
+      const row = result.rows[0];
+      if (!row) {
+        return res.status(404).json({ error: 'Proposal submission not found.' });
+      }
+
+      await deleteBlob(String(row.pathname));
+      await central.execute({
+        sql: 'DELETE FROM proposal_submissions WHERE id = ?',
+        args: [String(req.params.id)],
+      });
+      await incrementPortalLiveVersion();
+      return res.json({ ok: true });
+    } catch (error) {
+      console.error('Failed to delete proposal submission:', error);
+      return res.status(500).json({ error: 'Failed to delete proposal submission and its file.' });
     }
   });
 

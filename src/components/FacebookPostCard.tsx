@@ -50,7 +50,7 @@ export function FacebookPostCard({
     : {
         code: post.orgCode,
         shortName: post.orgShortName,
-        accentColor: '#1E3A8A',
+        accentColor: '#166534',
       };
   const resolvedImg = resolvePostImageUrl(post.imageUrl);
   const [imgError, setImgError] = useState(false);
@@ -110,7 +110,7 @@ export function FacebookPostCard({
                 <button
                   type="button"
                   onClick={() => onOpenOrg(post.orgCode)}
-                  className="truncate text-sm font-semibold text-stone-900 transition-colors hover:text-[#1E3A8A] hover:underline cursor-pointer"
+                  className="truncate text-sm font-semibold text-stone-900 transition-colors hover:text-[#166534] hover:underline cursor-pointer"
                 >
                   {post.orgShortName} — {post.orgFullName}
                 </button>
@@ -134,7 +134,7 @@ export function FacebookPostCard({
       </div>
 
       <div className="space-y-2 px-3.5 pb-3.5 sm:px-5 sm:pb-4">
-        <div className="flex items-center gap-2 text-xs font-medium text-[#1E3A8A]">
+        <div className="flex items-center gap-2 text-xs font-medium text-[#166534]">
           <Calendar className="w-3.5 h-3.5 shrink-0" />
           <span>Event Date: {formatEventDate(post.eventDate)}</span>
         </div>
@@ -151,7 +151,7 @@ export function FacebookPostCard({
             onClick={() => onOpenLightbox(resolvedImg, post.title)}
             aria-label={`View full-size image: ${post.title}`}
             title="View full-size image"
-            className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A8A] cursor-zoom-in"
+            className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#166534] cursor-zoom-in"
           >
             <img
               src={resolvedImg}
@@ -179,11 +179,11 @@ export function FacebookPostCard({
               onClick={() => void handleToggleLike()}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-medium transition-colors cursor-pointer sm:gap-1.5 sm:px-3 ${
                 liked
-                  ? 'bg-[#1E3A8A]/10 text-[#1E3A8A]'
+                  ? 'bg-[#166534]/10 text-[#166534]'
                   : 'text-stone-700 hover:bg-stone-100'
               }`}
             >
-              <Heart className={`w-4 h-4 ${liked ? 'fill-[#1E3A8A] text-[#1E3A8A]' : ''}`} />
+              <Heart className={`w-4 h-4 ${liked ? 'fill-[#166534] text-[#166534]' : ''}`} />
               <span className="tabular-nums">{likesCount}</span>
               <span>{likesCount === 1 ? 'Like' : 'Likes'}</span>
             </button>
@@ -211,7 +211,7 @@ export function FacebookPostCard({
             <button
               type="button"
               onClick={() => onOpenOrg(post.orgCode)}
-              className="shrink-0 whitespace-nowrap text-[11px] font-medium text-[#1E3A8A] transition hover:underline cursor-pointer sm:text-xs"
+              className="shrink-0 whitespace-nowrap text-[11px] font-medium text-[#166534] transition hover:underline cursor-pointer sm:text-xs"
             >
               Visit {post.orgShortName} Page →
             </button>

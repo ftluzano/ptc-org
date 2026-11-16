@@ -10,7 +10,9 @@ import {
   Trash2,
   User,
   XCircle,
+  FileUp,
 } from 'lucide-react';
+import { upload } from '@vercel/blob/client';
 import {
   getOrgByCode,
   type OrganizationConfig,
@@ -33,7 +35,7 @@ interface OrgProfilePageProps {
   onOrganizationProfileUpdated: (orgCode: string, profile: OrganizationProfile) => void;
 }
 
-type OrgViewTab = 'feed' | 'profile' | 'compose' | 'submissions';
+type OrgViewTab = 'feed' | 'profile' | 'compose' | 'proposal' | 'submissions';
 
 function readImageAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -90,6 +92,11 @@ export function OrgProfilePage({
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
+  const [proposalTitle, setProposalTitle] = useState('');
+  const [proposalMessage, setProposalMessage] = useState('');
+  const [proposalFile, setProposalFile] = useState<File | null>(null);
+  const [proposalFileInputKey, setProposalFileInputKey] = useState(0);
+  const [submittingProposal, setSubmittingProposal] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
@@ -356,7 +363,7 @@ export function OrgProfilePage({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit event letter.');
+        throw new Error(data.error || 'Failed to publish announcement.');
       }
       setTitle('');
       setCaption('');
@@ -364,11 +371,11 @@ export function OrgProfilePage({
       setUploadedImageUrl(null);
       setFormMessage({
         type: 'success',
-        text: `Submitted letter ${data.post.letterRef} to CESSCA for approval.`,
+        text: `Announcement published to the ${displayOrg.shortName} page and campus feed.`,
       });
       notifyPortalDataChanged();
       await loadOrganizationData();
-      setActiveTab('submissions');
+      setActiveTab('feed');
     } catch (err) {
       setFormMessage({
         type: 'error',
@@ -376,6 +383,64 @@ export function OrgProfilePage({
       });
     } finally {
       setSubmittingPost(false);
+    }
+  }
+
+  async function handleSubmitProposal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!proposalFile) {
+      setFormMessage({ type: 'error', text: 'Choose a proposal file to send to CESSCA.' });
+      return;
+    }
+    if (proposalFile.size === 0 || proposalFile.size > 25 * 1024 * 1024) {
+      setFormMessage({ type: 'error', text: 'Proposal files must be larger than 0 bytes and no larger than 25 MB.' });
+      return;
+    }
+
+    setFormMessage(null);
+    setSubmittingProposal(true);
+    try {
+      const safeName = proposalFile.name.replace(/[\\/?#%]/g, '_').slice(0, 180) || 'proposal-file';
+      const pathname = `proposals/${org.code}/${user?.uid}/${crypto.randomUUID()}-${safeName}`;
+      const blob = await upload(pathname, proposalFile, {
+        access: 'private',
+        handleUploadUrl: '/api/proposals/upload',
+        headers: getAuthHeaders(),
+        contentType: proposalFile.type || 'application/octet-stream',
+        multipart: true,
+      });
+      const response = await fetch('/api/proposals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          title: proposalTitle,
+          message: proposalMessage,
+          fileName: proposalFile.name,
+          pathname: blob.pathname,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send proposal to CESSCA.');
+      }
+
+      setProposalTitle('');
+      setProposalMessage('');
+      setProposalFile(null);
+      setProposalFileInputKey((key) => key + 1);
+      setFormMessage({ type: 'success', text: 'Proposal file sent securely to CESSCA.' });
+      notifyPortalDataChanged();
+      setActiveTab('feed');
+    } catch (error) {
+      setFormMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Unable to send proposal to CESSCA.',
+      });
+    } finally {
+      setSubmittingProposal(false);
     }
   }
 
@@ -417,7 +482,7 @@ export function OrgProfilePage({
         <button
           type="button"
           onClick={onBackToDirectory}
-          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#1E3A8A] cursor-pointer"
+          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#166534] cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back</span>
@@ -467,7 +532,7 @@ export function OrgProfilePage({
                 onClick={() => setActiveTab('feed')}
                 className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer sm:px-3.5 sm:text-xs ${
                   activeTab === 'feed'
-                    ? 'bg-[#1E3A8A] text-white'
+                    ? 'bg-[#166534] text-white'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
@@ -485,7 +550,7 @@ export function OrgProfilePage({
                 }}
                 className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer sm:px-3.5 sm:text-xs ${
                   activeTab === 'profile'
-                    ? 'bg-[#1E3A8A] text-white'
+                    ? 'bg-[#166534] text-white'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
@@ -496,18 +561,29 @@ export function OrgProfilePage({
                 onClick={() => setActiveTab('compose')}
                 className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer sm:px-3.5 sm:text-xs ${
                   activeTab === 'compose'
-                    ? 'bg-[#1E3A8A] text-white'
+                    ? 'bg-[#166534] text-white'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
-                Compose Letter
+                Publish Announcement
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('proposal')}
+                className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer sm:px-3.5 sm:text-xs ${
+                  activeTab === 'proposal'
+                    ? 'bg-[#166534] text-white'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                Send Proposal to CESSCA
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('submissions')}
                 className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer sm:px-3.5 sm:text-xs ${
                   activeTab === 'submissions'
-                    ? 'bg-[#1E3A8A] text-white'
+                    ? 'bg-[#166534] text-white'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
@@ -531,7 +607,7 @@ export function OrgProfilePage({
           <button
             type="button"
             onClick={() => onSelectOrg(userAssignedOrg.code)}
-            className="px-3.5 py-1.5 text-xs font-medium text-white bg-[#1E3A8A] hover:bg-[#172E6E] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-3.5 py-1.5 text-xs font-medium text-white bg-[#166534] hover:bg-[#14532d] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             Go to {userAssignedOrg.shortName} Studio
           </button>
@@ -573,7 +649,7 @@ export function OrgProfilePage({
                   onClick={() => onSelectOrg(item.code)}
                   className={`px-2.5 py-2 text-left text-xs rounded-lg transition-colors truncate cursor-pointer ${
                     item.code === org.code
-                      ? 'bg-[#1E3A8A] text-white font-semibold'
+                      ? 'bg-[#166534] text-white font-semibold'
                       : 'text-stone-700 hover:bg-stone-100 font-medium'
                   }`}
                 >
@@ -584,7 +660,7 @@ export function OrgProfilePage({
           </div>
         </aside>
 
-        {/* Right Main Feed / Officer Composer / Submissions */}
+        {/* Right Main Feed / Officer Publishing / Proposal Submission */}
         <section className="space-y-4 lg:col-span-8">
           {formMessage && (
             <div
@@ -631,7 +707,7 @@ export function OrgProfilePage({
                           organizationShortNameDraft !== displayOrg.shortName
                       );
                     }}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
                   />
                 </div>
                 <div className="space-y-2">
@@ -652,7 +728,7 @@ export function OrgProfilePage({
                           organizationNameDraft !== displayOrg.fullName
                       );
                     }}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
                   />
                 </div>
                 <div className="space-y-2">
@@ -670,7 +746,7 @@ export function OrgProfilePage({
                       setPresidentNameDraft(event.target.value);
                       setPresidentNameChanged(event.target.value !== displayOrg.president);
                     }}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
                   />
                 </div>
               </div>
@@ -695,7 +771,7 @@ export function OrgProfilePage({
                     );
                   }}
                   placeholder="Describe your organization and its mission..."
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm leading-relaxed text-stone-800 focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm leading-relaxed text-stone-800 focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
                 />
                 <div className="text-right text-[11px] text-stone-400">
                   {aboutChanged ? aboutDraft.length : (organizationProfile.aboutText || org.mission).length}
@@ -806,7 +882,7 @@ export function OrgProfilePage({
                       !organizationNameChanged &&
                       !presidentNameChanged)
                   }
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1E3A8A] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#172E6E] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#166534] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#14532d] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Save className="h-3.5 w-3.5" />
                   {savingProfile ? 'Saving...' : 'Save Profile'}
@@ -822,11 +898,10 @@ export function OrgProfilePage({
             >
               <div>
                 <h2 className="font-display text-xl font-semibold text-stone-900">
-                  Compose Event Announcement Letter
+                  Publish an Announcement
                 </h2>
                 <p className="text-xs text-stone-500 mt-1">
-                  Your submission is stored in {displayOrg.shortName}&apos;s isolated database as pending and
-                  routed to CESSCA for official clearance.
+                  Publish directly to your organization page and the campus-wide announcement feed.
                 </p>
               </div>
 
@@ -844,7 +919,7 @@ export function OrgProfilePage({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g., Annual General Assembly & Tech Talk"
-                    className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
                   />
                 </div>
 
@@ -858,7 +933,7 @@ export function OrgProfilePage({
                     required
                     value={eventDate}
                     onChange={(e) => setEventDate(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
                   />
                 </div>
               </div>
@@ -876,7 +951,7 @@ export function OrgProfilePage({
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder="Write the full announcement caption, venue, time, and registration notes for PTC students..."
-                  className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A]"
+                  className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
                 />
               </div>
 
@@ -931,10 +1006,96 @@ export function OrgProfilePage({
                 <button
                   type="submit"
                   disabled={submittingPost || uploadingImage}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium text-white bg-[#1E3A8A] hover:bg-[#172E6E] disabled:opacity-50 rounded-lg transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium text-white bg-[#166534] hover:bg-[#14532d] disabled:opacity-50 rounded-lg transition-colors cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{submittingPost ? 'Sending to CESSCA...' : 'Submit Pending Letter'}</span>
+                  <span>{submittingPost ? 'Publishing...' : 'Publish Announcement'}</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {activeTab === 'proposal' && isOwningOfficer && (
+            <form
+              onSubmit={handleSubmitProposal}
+              className="space-y-4 rounded-xl border border-stone-200 bg-white p-4 sm:p-5"
+            >
+              <div>
+                <h2 className="font-display text-xl font-semibold text-stone-900">
+                  Send a Proposal File to CESSCA
+                </h2>
+                <p className="mt-1 text-xs leading-relaxed text-stone-500">
+                  Use this separate request channel for project proposals and supporting documents.
+                  Any file type is accepted, up to 25 MB per file.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="proposal-title" className="block text-xs font-medium text-stone-700">
+                  Proposal title
+                </label>
+                <input
+                  id="proposal-title"
+                  type="text"
+                  required
+                  minLength={3}
+                  maxLength={160}
+                  value={proposalTitle}
+                  onChange={(event) => setProposalTitle(event.target.value)}
+                  placeholder="e.g., Student Leadership Workshop"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="proposal-message" className="block text-xs font-medium text-stone-700">
+                  Message to CESSCA (optional)
+                </label>
+                <textarea
+                  id="proposal-message"
+                  rows={4}
+                  maxLength={2000}
+                  value={proposalMessage}
+                  onChange={(event) => setProposalMessage(event.target.value)}
+                  placeholder="Add context or instructions for reviewing your attached file."
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm leading-relaxed focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="proposal-file" className="block text-xs font-medium text-stone-700">
+                  Proposal file
+                </label>
+                <input
+                  id="proposal-file"
+                  key={proposalFileInputKey}
+                  type="file"
+                  required
+                  onChange={(event) => setProposalFile(event.target.files?.[0] ?? null)}
+                  className="block w-full cursor-pointer rounded-lg border border-stone-200 bg-stone-50 p-2 text-xs text-stone-600 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-emerald-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-emerald-900"
+                />
+                <p className="text-[11px] text-stone-500">
+                  {proposalFile
+                    ? `${proposalFile.name} · ${(proposalFile.size / (1024 * 1024)).toFixed(2)} MB`
+                    : 'PDF, Word, spreadsheets, images, and other file formats are supported.'}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t border-stone-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('feed')}
+                  className="cursor-pointer rounded-lg px-4 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingProposal || !proposalFile}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-800 px-4 py-2.5 text-xs font-medium text-white transition-colors hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <FileUp className="h-4 w-4" />
+                  {submittingProposal ? 'Uploading and sending...' : 'Send Proposal'}
                 </button>
               </div>
             </form>
@@ -944,13 +1105,13 @@ export function OrgProfilePage({
             <div className="space-y-3">
               {submissions.length === 0 ? (
                 <div className="bg-white border border-stone-200 rounded-xl p-10 text-center space-y-3">
-                  <p className="text-sm font-medium text-stone-900">No event letters submitted yet.</p>
+                  <p className="text-sm font-medium text-stone-900">No announcements published yet.</p>
                   <button
                     type="button"
                     onClick={() => setActiveTab('compose')}
-                    className="px-4 py-2 text-xs font-medium text-white bg-[#1E3A8A] rounded-lg hover:bg-[#172E6E] transition-colors cursor-pointer"
+                    className="px-4 py-2 text-xs font-medium text-white bg-[#166534] rounded-lg hover:bg-[#14532d] transition-colors cursor-pointer"
                   >
-                    Draft First Event Letter
+                    Publish First Announcement
                   </button>
                 </div>
               ) : (
@@ -975,13 +1136,13 @@ export function OrgProfilePage({
                           {item.status === 'approved' && (
                             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                               <CheckCircle2 className="w-4 h-4" />
-                              Approved
+                              Published
                             </span>
                           )}
                           {item.status === 'pending' && (
                             <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
                               <Clock className="w-4 h-4" />
-                              Pending CESSCA
+                              Pending Review
                             </span>
                           )}
                           {item.status === 'rejected' && (

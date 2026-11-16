@@ -64,7 +64,7 @@ export function GlobalFeedPage({
         <button
           type="button"
           onClick={onBackToDirectory}
-          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#1E3A8A] cursor-pointer"
+          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#166534] cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Organizations Directory</span>
@@ -76,7 +76,7 @@ export function GlobalFeedPage({
           Global Campus Announcements
         </h1>
         <p className="text-sm text-stone-600">
-          Live stream of CESSCA-approved events and bulletins across all 12 official PTC student
+          Live stream of announcements and bulletins published by all 12 official PTC student
           organizations.
         </p>
       </div>
@@ -87,7 +87,7 @@ export function GlobalFeedPage({
           onClick={() => setSelectedOrg('all')}
           className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all whitespace-nowrap cursor-pointer sm:px-3 sm:text-xs ${
             selectedOrg === 'all'
-              ? 'bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.22)]'
+              ? 'bg-[#14532d] text-white shadow-[0_8px_18px_rgba(20,83,45,0.22)]'
               : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
           }`}
         >
@@ -100,7 +100,7 @@ export function GlobalFeedPage({
             onClick={() => setSelectedOrg(org.code)}
             className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all whitespace-nowrap cursor-pointer sm:px-3 sm:text-xs ${
               selectedOrg === org.code
-                ? 'bg-[#172554] text-white shadow-[0_8px_18px_rgba(23,37,84,0.22)]'
+                ? 'bg-[#14532d] text-white shadow-[0_8px_18px_rgba(20,83,45,0.22)]'
                 : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
             }`}
           >
@@ -117,12 +117,12 @@ export function GlobalFeedPage({
       ) : posts.length === 0 ? (
         <div className="rounded-[20px] border border-stone-200 bg-white/90 p-7 text-center shadow-sm">
           <p className="text-sm font-medium text-stone-900">
-            No approved announcements for this filter yet.
+            No announcements for this filter yet.
           </p>
           <button
             type="button"
             onClick={() => setSelectedOrg('all')}
-            className="mt-3 rounded-lg bg-[#172554] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#1c2f72] cursor-pointer"
+            className="mt-3 rounded-lg bg-[#14532d] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#14532d] cursor-pointer"
           >
             Show All Organizations
           </button>

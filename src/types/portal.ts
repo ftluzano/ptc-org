@@ -56,6 +56,20 @@ export interface SubmissionQueueItem {
   reviewedBy: string | null;
 }
 
+export interface ProposalSubmission {
+  id: string;
+  orgCode: string;
+  orgShortName: string;
+  orgFullName: string;
+  presidentName: string;
+  title: string;
+  message: string;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+  submittedAt: string;
+}
+
 export interface OrgStats {
   orgCode: string;
   approvedCount: number;

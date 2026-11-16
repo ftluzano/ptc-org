@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --brand-900: #172554;
-  --brand-700: #1d4ed8;
-  --brand-50: #eef4ff;
+  --brand-900: #14532d;
+  --brand-700: #166534;
+  --brand-50: #f0fdf4;
+  --accent-yellow: #facc15;
   --surface-strong: #ffffff;
   --surface-soft: #f8fafc;
   --surface-muted: #f1f5f9;
@@ -75,13 +76,13 @@
   html {
     font-family: var(--font-sans);
     scroll-behavior: auto;
-    background: linear-gradient(180deg, #e7eeff 0%, #eef3ff 52%, #e7eefb 100%);
+    background: linear-gradient(180deg, #eff7eb 0%, #f7faef 52%, #eaf4e5 100%);
   }
 
   body {
     margin: 0;
     min-height: 100vh;
-    background: linear-gradient(180deg, #e7eeff 0%, #eef3ff 52%, #e7eefb 100%);
+    background: linear-gradient(180deg, #eff7eb 0%, #f7faef 52%, #eaf4e5 100%);
     color: var(--text-strong);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -107,12 +108,12 @@
   }
 
   ::selection {
-    background: rgba(29, 78, 216, 0.18);
+    background: rgba(250, 204, 21, 0.32);
   }
 }
 
 .portal-shell {
-  background: linear-gradient(180deg, #e7eeff 0%, #eef3ff 52%, #e7eefb 100%);
+  background: linear-gradient(180deg, #eff7eb 0%, #f7faef 52%, #eaf4e5 100%);
   background-attachment: fixed;
 }
 

@@ -37,7 +37,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     envUrlKey: 'TURSO_DATABASE_URL_SSC',
     envTokenKey: 'TURSO_AUTH_TOKEN_SSC',
     uidEnvKey: 'OFFICER_UID_SSC',
-    accentColor: '#1E3A8A',
+    accentColor: '#166534',
     foundedYear: '1993',
     officeLocation: 'Student Center, Room 201',
     mission:

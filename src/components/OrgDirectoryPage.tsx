@@ -34,7 +34,7 @@ export function OrgDirectoryPage({
 
   return (
     <main className="portal-page-enter mx-auto max-w-7xl space-y-6 px-3 py-4 sm:space-y-8 sm:px-6 sm:py-8">
-      <section className="relative isolate min-h-[340px] overflow-hidden rounded-[20px] bg-[#172554] shadow-[0_24px_54px_rgba(15,23,42,0.2)] sm:min-h-[440px] sm:rounded-[24px] lg:min-h-[480px]">
+      <section className="relative isolate min-h-[340px] overflow-hidden rounded-[20px] bg-[#14532d] shadow-[0_24px_54px_rgba(15,23,42,0.2)] sm:min-h-[440px] sm:rounded-[24px] lg:min-h-[480px]">
         <img
           src={CAMPUS_HERO_IMAGE}
           alt="Pateros Technological College main building entrance"
@@ -43,26 +43,26 @@ export function OrgDirectoryPage({
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-[#101c3c]/95 via-[#172554]/75 to-[#172554]/10"
+          className="absolute inset-0 bg-gradient-to-r from-[#052e16]/95 via-[#14532d]/75 to-[#14532d]/10"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-[#101c3c]/45 via-transparent to-transparent"
+          className="absolute inset-0 bg-gradient-to-t from-[#052e16]/45 via-transparent to-transparent"
         />
         <div className="relative z-10 flex min-h-[340px] items-center px-5 py-8 sm:min-h-[440px] sm:px-10 sm:py-10 lg:min-h-[480px] lg:px-14">
           <div className="max-w-2xl">
             <h1 className="font-display text-3xl font-semibold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
               Find your people.
-              <span className="mt-1 block text-blue-100">Shape your campus.</span>
+              <span className="mt-1 block text-yellow-300">Shape your campus.</span>
             </h1>
-            <p className="mt-4 max-w-xl text-sm leading-5 text-blue-50/90 sm:mt-5 sm:text-base sm:leading-7">
+            <p className="mt-4 max-w-xl text-sm leading-5 text-green-50/90 sm:mt-5 sm:text-base sm:leading-7">
               Discover the official PTC organizations, explore your interests, and find a community
               to grow with.
             </p>
             <div className="mt-5 flex flex-wrap gap-3 sm:mt-7">
               <a
                 href="#org-directory"
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-[#172554] shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#172554] sm:px-5 sm:py-3 sm:text-sm"
+                className="inline-flex items-center gap-2 rounded-xl bg-yellow-300 px-4 py-2.5 text-xs font-semibold text-green-950 shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-yellow-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#14532d] sm:px-5 sm:py-3 sm:text-sm"
               >
                 Explore organizations
                 <ArrowDown className="h-4 w-4" />
@@ -73,9 +73,9 @@ export function OrgDirectoryPage({
         <div className="absolute bottom-7 right-7 z-10 hidden rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-white shadow-xl backdrop-blur-md lg:block">
           <div className="flex items-baseline gap-2">
             <span className="font-display text-4xl font-semibold">{organizations.length}</span>
-            <span className="text-xs font-medium text-blue-50">official organizations</span>
+            <span className="text-xs font-medium text-green-50">official organizations</span>
           </div>
-          <p className="mt-1 text-xs text-blue-100/85">One campus. Many ways to belong.</p>
+          <p className="mt-1 text-xs text-yellow-100/90">One campus. Many ways to belong.</p>
         </div>
       </section>
 
@@ -95,7 +95,7 @@ export function OrgDirectoryPage({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, president, or interest"
               aria-label="Search student organizations"
-              className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-10 pr-3.5 text-sm text-stone-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 sm:rounded-2xl sm:py-3.5 sm:pl-11 sm:pr-4"
+              className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-10 pr-3.5 text-sm text-stone-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition focus:border-[#166534] focus:ring-4 focus:ring-[#166534]/10 sm:rounded-2xl sm:py-3.5 sm:pl-11 sm:pr-4"
             />
           </div>
         </div>
@@ -110,7 +110,7 @@ export function OrgDirectoryPage({
               onClick={() => {
                 setSearchQuery('');
               }}
-              className="mt-3 rounded-lg bg-[#172554] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#1c2f72] cursor-pointer"
+              className="mt-3 rounded-lg bg-[#14532d] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#14532d] cursor-pointer"
             >
               Reset Directory Filters
             </button>
@@ -126,13 +126,13 @@ export function OrgDirectoryPage({
                   key={org.code}
                   type="button"
                   onClick={() => onSelectOrg(org.code)}
-                  className="group flex flex-col justify-between gap-3 rounded-[18px] border border-stone-200 bg-white/90 p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A8A] cursor-pointer sm:gap-4 sm:rounded-[20px] sm:p-4"
+                  className="group flex flex-col justify-between gap-3 rounded-[18px] border border-stone-200 bg-white/90 p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#166534] cursor-pointer sm:gap-4 sm:rounded-[20px] sm:p-4"
                 >
                   <div className="space-y-3.5">
                     <OrgEmblem org={org} size="md" imageUrl={stats?.avatarUrl} />
 
                     <div>
-                      <h3 className="text-lg font-semibold text-stone-900 transition-colors group-hover:text-[#1E3A8A]">
+                      <h3 className="text-lg font-semibold text-stone-900 transition-colors group-hover:text-[#166534]">
                         {org.shortName}
                       </h3>
                       <p className="mt-0.5 text-sm leading-snug text-stone-600 line-clamp-2">
@@ -151,7 +151,7 @@ export function OrgDirectoryPage({
                       <span className="text-stone-400">President: </span>
                       <span className="font-medium text-stone-800">{org.president}</span>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1.5 font-medium text-stone-700 transition-colors group-hover:text-[#1E3A8A]">
+                    <div className="flex shrink-0 items-center gap-1.5 font-medium text-stone-700 transition-colors group-hover:text-[#166534]">
                       <span className="tabular-nums">
                         {approvedCount} {approvedCount === 1 ? 'post' : 'posts'}
                       </span>

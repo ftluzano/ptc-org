@@ -7,12 +7,14 @@ import {
   XCircle,
   ExternalLink,
   Trash2,
+  FileDown,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import { resolvePostImageUrl } from '../lib/mediaAssets';
 import { notifyPortalDataChanged } from '../lib/portalUpdates';
-import type { PostStatus, SubmissionQueueItem } from '../types/portal';
+import type { PostStatus, ProposalSubmission, SubmissionQueueItem } from '../types/portal';
 
 interface CesscaAdminPageProps {
   onSelectOrg: (orgCode: string) => void;
@@ -32,6 +34,11 @@ function formatDate(iso: string): string {
   });
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: CesscaAdminPageProps) {
   const { user, getAuthHeaders } = useAuth();
   const [items, setItems] = useState<SubmissionQueueItem[]>([]);
@@ -44,6 +51,11 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
     'approve' | 'reject' | 'delete' | null
   >(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [adminSection, setAdminSection] = useState<'letters' | 'proposals'>('letters');
+  const [proposals, setProposals] = useState<ProposalSubmission[]>([]);
+  const [proposalsLoading, setProposalsLoading] = useState(true);
+  const [proposalError, setProposalError] = useState<string | null>(null);
+  const [proposalActionId, setProposalActionId] = useState<string | null>(null);
 
   const loadQueue = useCallback(async () => {
     if (user?.role !== 'cessca') {
@@ -74,6 +86,32 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
   useEffect(() => {
     void loadQueue();
   }, [loadQueue]);
+
+  const loadProposals = useCallback(async () => {
+    if (user?.role !== 'cessca') {
+      setProposalsLoading(false);
+      return;
+    }
+    try {
+      const response = await fetch('/api/cessca/proposals', { headers: getAuthHeaders() });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load proposal files.');
+      }
+      setProposals((data.proposals ?? []) as ProposalSubmission[]);
+      setProposalError(null);
+    } catch (error) {
+      setProposalError(error instanceof Error ? error.message : 'Failed to load proposal files.');
+    } finally {
+      setProposalsLoading(false);
+    }
+  }, [user?.role, getAuthHeaders]);
+
+  useLiveUpdates(loadProposals);
+
+  useEffect(() => {
+    void loadProposals();
+  }, [loadProposals]);
 
   const counts = useMemo(() => {
     return {
@@ -181,28 +219,183 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
     }
   }
 
+  async function handleProposalDownload(proposal: ProposalSubmission) {
+    setProposalActionId(proposal.id);
+    setProposalError(null);
+    try {
+      const response = await fetch(
+        `/api/cessca/proposals/${encodeURIComponent(proposal.id)}/file`,
+        { headers: getAuthHeaders() }
+      );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Unable to download proposal file.');
+      }
+      const fileUrl = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement('a');
+      anchor.href = fileUrl;
+      anchor.download = proposal.fileName;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
+    } catch (error) {
+      setProposalError(error instanceof Error ? error.message : 'Unable to download proposal file.');
+    } finally {
+      setProposalActionId(null);
+    }
+  }
+
+  async function handleDeleteProposal(proposal: ProposalSubmission) {
+    if (!window.confirm(`Permanently delete "${proposal.fileName}" and its proposal record? This cannot be undone.`)) {
+      return;
+    }
+    setProposalActionId(proposal.id);
+    setProposalError(null);
+    try {
+      const response = await fetch(`/api/cessca/proposals/${encodeURIComponent(proposal.id)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to delete proposal file.');
+      }
+      setProposals((current) => current.filter((item) => item.id !== proposal.id));
+      notifyPortalDataChanged();
+    } catch (error) {
+      setProposalError(error instanceof Error ? error.message : 'Unable to delete proposal file.');
+    } finally {
+      setProposalActionId(null);
+    }
+  }
+
   if (user?.role !== 'cessca') {
     return (
       <main className="portal-page-enter mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-6 text-center">
-          <div className="w-12 h-12 rounded-xl bg-[#1E3A8A]/10 text-[#1E3A8A] flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 rounded-xl bg-[#166534]/10 text-[#166534] flex items-center justify-center mx-auto">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <h1 className="font-display text-2xl font-semibold text-stone-900">
             CESSCA Super Administrator Panel
           </h1>
           <p className="text-sm text-stone-600 max-w-md mx-auto">
-            This moderation console is restricted to CESSCA administrators reviewing pending event
-            letters across all 12 student organizations.
+            This administration console is restricted to CESSCA administrators managing proposal
+            files and legacy announcement requests.
           </p>
           <button
             type="button"
             onClick={onOpenLogin}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-[#1E3A8A] hover:bg-[#172E6E] rounded-lg transition-colors cursor-pointer"
+            className="px-5 py-2.5 text-sm font-medium text-white bg-[#166534] hover:bg-[#14532d] rounded-lg transition-colors cursor-pointer"
           >
             Sign In as CESSCA Admin
           </button>
         </div>
+      </main>
+    );
+  }
+
+  if (adminSection === 'proposals') {
+    return (
+      <main className="portal-page-enter mx-auto max-w-7xl space-y-4 px-3 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-widest text-stone-500">
+              CESSCA Super Administrator
+            </div>
+            <h1 className="mt-1 font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
+              Proposal File Submissions
+            </h1>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setAdminSection('letters')}
+              className="rounded-lg bg-stone-100 px-3.5 py-2 text-xs font-medium text-stone-700 transition hover:bg-stone-200"
+            >
+              Legacy Announcement Queue
+            </button>
+            <button
+              type="button"
+              onClick={() => setAdminSection('proposals')}
+              className="rounded-lg bg-emerald-800 px-3.5 py-2 text-xs font-medium text-white"
+            >
+              Proposal Files ({proposals.length})
+            </button>
+          </div>
+        </div>
+
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-relaxed text-emerald-950">
+          Files are stored privately and only downloadable by CESSCA administrators. Attachments
+          are never rendered inline; download them before opening.
+        </p>
+
+        {proposalError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {proposalError}
+          </div>
+        )}
+
+        <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
+          {proposalsLoading ? (
+            <div className="p-8 text-sm text-stone-500">Loading proposal submissions...</div>
+          ) : proposals.length === 0 ? (
+            <div className="p-10 text-center">
+              <FileText className="mx-auto h-8 w-8 text-stone-400" />
+              <p className="mt-3 text-sm font-medium text-stone-900">No proposal files submitted yet.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-stone-100">
+              {proposals.map((proposal) => (
+                <article key={proposal.id} className="space-y-3 p-4 sm:p-5">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                    <div className="min-w-0 space-y-1">
+                      <div className="text-[11px] font-medium uppercase tracking-wide text-emerald-800">
+                        {proposal.orgShortName} · {formatDate(proposal.submittedAt)}
+                      </div>
+                      <h2 className="text-base font-semibold text-stone-900">{proposal.title}</h2>
+                      <p className="text-xs text-stone-600">
+                        {proposal.orgFullName} · Submitted by {proposal.presidentName}
+                      </p>
+                      {proposal.message && (
+                        <p className="whitespace-pre-line pt-1 text-sm leading-relaxed text-stone-700">
+                          {proposal.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        disabled={proposalActionId !== null}
+                        onClick={() => void handleProposalDownload(proposal)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-800 px-3 py-2 text-xs font-medium text-white transition hover:bg-emerald-900 disabled:opacity-50"
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                        {proposalActionId === proposal.id ? 'Working...' : 'Download'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={proposalActionId !== null}
+                        onClick={() => void handleDeleteProposal(proposal)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">
+                    <FileText className="h-4 w-4 shrink-0 text-emerald-800" />
+                    <span className="max-w-full break-all font-medium text-stone-800">{proposal.fileName}</span>
+                    <span>{formatFileSize(proposal.fileSize)}</span>
+                    <span>{proposal.contentType}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     );
   }
@@ -214,10 +407,10 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
       <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-end sm:gap-3">
         <div>
           <div className="text-xs uppercase tracking-widest text-stone-500 font-medium">
-            Super Administrator Moderation Console
+            Super Administrator Console
           </div>
           <h1 className="mt-1 font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
-            CESSCA Event Letter Queue
+            Legacy Announcement Queue
           </h1>
         </div>
 
@@ -228,9 +421,26 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search letter ref, org, or title..."
-            className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A]"
+            className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
           />
         </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setAdminSection('letters')}
+          className="rounded-lg bg-emerald-800 px-3.5 py-2 text-xs font-medium text-white"
+        >
+          Legacy Announcement Queue
+        </button>
+        <button
+          type="button"
+          onClick={() => setAdminSection('proposals')}
+          className="rounded-lg bg-stone-100 px-3.5 py-2 text-xs font-medium text-stone-700 transition hover:bg-stone-200"
+        >
+          Proposal Files ({proposals.length})
+        </button>
       </div>
 
       {/* Summary KPI Strip */}
@@ -299,7 +509,7 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
               <button
                 type="button"
                 onClick={() => setStatusFilter('all')}
-                className="text-xs font-medium text-[#1E3A8A] hover:underline cursor-pointer"
+                className="text-xs font-medium text-[#166534] hover:underline cursor-pointer"
               >
                 View all submissions
               </button>
@@ -323,7 +533,7 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
                         key={item.id}
                         onClick={() => setSelectedId(item.id)}
                         className={`cursor-pointer transition-colors ${
-                          isSelected ? 'bg-[#1E3A8A]/5' : 'hover:bg-stone-50'
+                          isSelected ? 'bg-[#166534]/5' : 'hover:bg-stone-50'
                         }`}
                       >
                         <td className="py-3 px-4 font-mono text-stone-600 tabular-nums whitespace-nowrap">
@@ -390,7 +600,7 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
                 <button
                   type="button"
                   onClick={() => onSelectOrg(selectedItem.orgCode)}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-[#1E3A8A] hover:underline shrink-0 cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-[#166534] hover:underline shrink-0 cursor-pointer"
                 >
                   <span>{selectedItem.orgShortName} Page</span>
                   <ExternalLink className="w-3 h-3" />
@@ -448,7 +658,7 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
                   value={feedbackInput}
                   onChange={(e) => setFeedbackInput(e.target.value)}
                   placeholder="Optional approval note or mandatory revision reason..."
-                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A]"
+                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
                 />
               </div>
 

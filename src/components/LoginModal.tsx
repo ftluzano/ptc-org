@@ -98,7 +98,7 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="president@ptc.edu.ph"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/25"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/25"
               />
             </div>
 
@@ -114,14 +114,14 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-[#1E3A8A] focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/25"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/25"
               />
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full cursor-pointer rounded-lg bg-[#1E3A8A] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#172E6E] disabled:opacity-50"
+              className="w-full cursor-pointer rounded-lg bg-[#166534] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#14532d] disabled:opacity-50"
             >
               {submitting ? 'Verifying...' : 'Sign In'}
             </button>
@@ -140,11 +140,11 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
               onClick={() => chooseAccount('cessca')}
               className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 selectedAccount === 'cessca'
-                  ? 'border-[#1E3A8A] bg-[#1E3A8A]/5'
-                  : 'border-stone-200 bg-stone-50 hover:border-[#1E3A8A] hover:bg-[#1E3A8A]/5'
+                  ? 'border-[#166534] bg-[#166534]/5'
+                  : 'border-stone-200 bg-stone-50 hover:border-[#166534] hover:bg-[#14532d]/5'
               }`}
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1E3A8A] text-white">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#166534] text-white">
                 <ShieldCheck className="h-4 w-4" />
               </span>
               <span className="min-w-0">
@@ -164,7 +164,7 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
                   onClick={() => chooseAccount(org.code)}
                   className={`flex min-w-0 cursor-pointer items-center gap-1.5 rounded-lg border p-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2.5 sm:p-2.5 ${
                     selectedAccount === org.code
-                      ? 'border-[#1E3A8A] bg-[#1E3A8A]/5'
+                      ? 'border-[#166534] bg-[#166534]/5'
                       : 'border-stone-200 bg-white hover:border-stone-400 hover:bg-stone-50'
                   }`}
                 >

@@ -1,5 +1,6 @@
 import React from 'react';
 import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
+import ptcLogo from '../assets/images/ptc logo.png';
 import currentPresidentImage from '../assets/images/ptc-president-analiza-arcega.png';
 import angelusPonceImage from '../assets/images/ptc-administrator-angelus-ponce.png';
 import daisyVillanuevaImage from '../assets/images/ptc-administrator-daisy-villanueva.png';
@@ -93,6 +94,26 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
           aria-label="About Pateros Technological College"
           className="scroll-mt-24 space-y-4 sm:space-y-5"
         >
+        {scrollToAbout && (
+          <div className="relative flex min-h-64 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl bg-emerald-950 px-5 py-8 text-center shadow-lg sm:min-h-80 sm:gap-4">
+            <img
+              src={CAMPUS_HERO_IMAGE}
+              alt=""
+              aria-hidden="true"
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 h-full w-full object-cover object-center opacity-40"
+            />
+            <div className="absolute inset-0 bg-emerald-950/60" />
+            <img
+              src={ptcLogo}
+              alt="Pateros Technological College seal"
+              className="relative z-10 h-24 w-24 object-contain drop-shadow-lg sm:h-32 sm:w-32"
+            />
+            <h1 className="relative z-10 max-w-3xl font-sans text-2xl font-extrabold uppercase tracking-wide text-white drop-shadow-[0_2px_3px_rgba(20,83,45,0.9)] sm:text-4xl">
+              Pateros Technological College
+            </h1>
+          </div>
+        )}
         <div>
           <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
             About PTC
@@ -141,16 +162,16 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
           >
             Former Administrators
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
             {formerAdministrators.map((administrator) => (
               <figure
                 key={administrator.src}
-                className="self-start overflow-hidden rounded-xl border border-stone-200 bg-[#eeedff] shadow-sm"
+                className="aspect-[0.64] overflow-hidden rounded-xl border border-stone-200 bg-[#eeedff] shadow-sm"
               >
                 <img
                   src={administrator.src}
                   alt={administrator.alt}
-                  className="h-auto w-full"
+                  className="h-full w-full object-fill"
                   loading="lazy"
                 />
               </figure>

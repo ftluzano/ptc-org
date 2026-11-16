@@ -73,7 +73,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
 
   return (
     <main className="portal-page-enter mx-auto max-w-7xl space-y-6 px-3 py-4 sm:space-y-8 sm:px-6 sm:py-8">
-      {!showAbout && (
+      {!scrollToAbout && (
         <section
           aria-label="Pateros Technological College campus"
           className="relative h-[260px] overflow-hidden rounded-[20px] bg-emerald-950 shadow-[0_24px_54px_rgba(15,23,42,0.18)] sm:h-[380px] sm:rounded-[24px] lg:h-[460px]"
@@ -98,37 +98,37 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             About PTC
           </h1>
         </div>
-        <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-4 text-sm leading-7 text-stone-700 shadow-sm sm:p-6">
+        <div className="space-y-5 rounded-2xl border border-stone-200 bg-white p-5 text-base leading-8 text-stone-700 shadow-sm sm:p-7">
           {ptcHistory.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
         <section aria-labelledby="ptc-president-heading" className="space-y-4">
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
               2017–Present
             </p>
             <h2
               id="ptc-president-heading"
-              className="mt-1 font-display text-xl font-semibold text-stone-900 sm:text-2xl"
+              className="mt-1 font-display text-2xl font-semibold text-stone-900 sm:text-3xl"
             >
               THE PRESIDENT
             </h2>
           </div>
-          <article className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-stone-200 bg-white p-4 text-center shadow-md">
-            <figure className="flex w-full max-w-[280px] items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-2 shadow-md">
+          <article className="mx-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-md sm:p-6">
+            <figure className="flex w-full max-w-[320px] items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-2 shadow-md">
               <img
                 src={currentPresidentImage}
                 alt="Dr. Analiza F. Arcega"
-                className="max-h-[360px] w-full rounded-xl object-contain"
+                className="max-h-[420px] w-full rounded-xl object-contain"
                 loading="lazy"
               />
             </figure>
             <div>
-              <h3 className="font-display text-xl font-semibold text-stone-900">
+              <h3 className="font-display text-2xl font-semibold text-stone-900">
                 Dr. Analiza F. Arcega
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              <p className="mt-2 text-base leading-relaxed text-stone-600">
                 LPT, RGC, CSASS
               </p>
             </div>
@@ -137,11 +137,11 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
         <section aria-labelledby="ptc-former-administrators-heading" className="space-y-4">
           <h2
             id="ptc-former-administrators-heading"
-            className="text-center font-display text-xl font-semibold text-stone-900 sm:text-2xl"
+            className="text-center font-display text-2xl font-semibold text-stone-900 sm:text-3xl"
           >
             Former Administrators
           </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {formerAdministrators.map((administrator) => (
               <figure
                 key={administrator.src}

@@ -162,7 +162,7 @@ function PortalShell() {
 
       <div className="flex-1">
         {(route.page === 'home' || route.page === 'about') && (
-          <LandingPage showAbout={route.page === 'about'} scrollToAbout={route.page === 'about'} />
+          <LandingPage showAbout scrollToAbout={route.page === 'about'} />
         )}
 
         {route.page === 'organizations' && (

@@ -5,6 +5,10 @@
   --brand-700: #166534;
   --brand-50: #f0fdf4;
   --accent-yellow: #facc15;
+  --page-background:
+    radial-gradient(ellipse at 8% 0%, rgba(250, 204, 21, 0.18), transparent 38%),
+    radial-gradient(ellipse at 92% 18%, rgba(22, 101, 52, 0.14), transparent 36%),
+    linear-gradient(135deg, #f3f8e8 0%, #fffbea 52%, #e9f4e6 100%);
   --surface-strong: #ffffff;
   --surface-soft: #f8fafc;
   --surface-muted: #f1f5f9;
@@ -76,13 +80,13 @@
   html {
     font-family: var(--font-sans);
     scroll-behavior: auto;
-    background: linear-gradient(180deg, #eff7eb 0%, #f7faef 52%, #eaf4e5 100%);
+    background: var(--page-background);
   }
 
   body {
     margin: 0;
     min-height: 100vh;
-    background: linear-gradient(180deg, #eff7eb 0%, #f7faef 52%, #eaf4e5 100%);
+    background: var(--page-background);
     color: var(--text-strong);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -113,7 +117,7 @@
 }
 
 .portal-shell {
-  background: linear-gradient(180deg, #eff7eb 0%, #f7faef 52%, #eaf4e5 100%);
+  background: var(--page-background);
   background-attachment: fixed;
 }
 

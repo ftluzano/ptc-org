@@ -110,16 +110,18 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
               id="ptc-president-heading"
               className="mt-1 font-display text-xl font-semibold text-stone-900 sm:text-2xl"
             >
-              The President
+              THE PRESIDENT
             </h2>
           </div>
           <article className="flex flex-col items-center gap-5 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:flex-row sm:p-6">
-            <img
-              src={currentPresidentImage}
-              alt="Dr. Analiza F. Arcega"
-              className="max-h-[360px] w-full max-w-[280px] rounded-xl object-contain"
-              loading="lazy"
-            />
+            <figure className="flex w-full max-w-[280px] items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-2 shadow-md">
+              <img
+                src={currentPresidentImage}
+                alt="Dr. Analiza F. Arcega"
+                className="max-h-[360px] w-full rounded-xl object-contain"
+                loading="lazy"
+              />
+            </figure>
             <div className="text-center sm:text-left">
               <h3 className="font-display text-xl font-semibold text-stone-900">
                 Dr. Analiza F. Arcega
@@ -136,7 +138,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
         <section aria-labelledby="ptc-former-administrators-heading" className="space-y-4">
           <h2
             id="ptc-former-administrators-heading"
-            className="font-display text-xl font-semibold text-stone-900 sm:text-2xl"
+            className="text-center font-display text-xl font-semibold text-stone-900 sm:text-2xl"
           >
             Former Administrators
           </h2>
@@ -144,7 +146,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             {formerAdministrators.map((administrator) => (
               <figure
                 key={administrator.src}
-                className="overflow-hidden rounded-xl border border-stone-200 bg-[#eeedff] shadow-sm"
+                className="self-start overflow-hidden rounded-xl border border-stone-200 bg-[#eeedff] shadow-sm"
               >
                 <img
                   src={administrator.src}

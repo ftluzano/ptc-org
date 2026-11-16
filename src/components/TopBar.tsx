@@ -55,11 +55,9 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
           <button
             type="button"
             onClick={() => onNavigate({ page: 'organizations' })}
-            aria-current={
-              route.page === 'organizations' || route.page === 'org' ? 'page' : undefined
-            }
+            aria-current={route.page === 'organizations' ? 'page' : undefined}
             className={`inline-flex shrink-0 items-center rounded-lg px-2 py-2 transition-colors sm:px-3 ${
-              route.page === 'organizations' || route.page === 'org'
+              route.page === 'organizations'
                 ? 'bg-emerald-800 text-white'
                 : 'text-stone-700 hover:bg-stone-200'
             }`}

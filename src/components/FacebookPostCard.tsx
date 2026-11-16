@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Check, Heart, Share2, ImageOff } from 'lucide-react';
+import { Calendar, Check, Heart, ImageOff, MoreHorizontal, Share2, Trash2 } from 'lucide-react';
 import { getOrgByCode } from '../config/org-config';
 import { resolvePostImageUrl } from '../lib/mediaAssets';
 import type { OrgPost } from '../types/portal';
@@ -13,6 +13,8 @@ interface FacebookPostCardProps {
   onOpenOrg?: (orgCode: string) => void;
   onOpenLightbox: (imageUrl: string, caption: string) => void;
   onLikeUpdated?: (postId: string, likesCount: number) => void;
+  onDelete?: (postId: string) => void;
+  deleting?: boolean;
 }
 
 function formatEventDate(dateStr: string): string {
@@ -43,6 +45,8 @@ export function FacebookPostCard({
   onOpenOrg,
   onOpenLightbox,
   onLikeUpdated,
+  onDelete,
+  deleting = false,
 }: FacebookPostCardProps) {
   const configuredOrg = getOrgByCode(post.orgCode);
   const org = configuredOrg
@@ -58,6 +62,16 @@ export function FacebookPostCard({
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [liking, setLiking] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setMenuOpen(false);
+    }
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
 
   useEffect(() => {
     setLikesCount(post.likesCount);
@@ -128,9 +142,45 @@ export function FacebookPostCard({
           </div>
         </div>
 
-        <span className="shrink-0 pt-0.5 font-mono text-[11px] text-stone-400 tabular-nums">
-          {post.letterRef}
-        </span>
+        <div className="flex shrink-0 items-start gap-1">
+          <span className="pt-1 font-mono text-[11px] text-stone-400 tabular-nums">
+            {post.letterRef}
+          </span>
+          {onDelete && (
+            <div className="relative">
+              <button
+                type="button"
+                aria-label={`Post options for ${post.title}`}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((open) => !open)}
+                className="rounded-full p-1.5 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#166534]"
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-20 mt-1 min-w-40 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={deleting}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onDelete(post.id);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {deleting ? 'Deleting...' : 'Delete post'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2 px-3.5 pb-3.5 sm:px-5 sm:pb-4">

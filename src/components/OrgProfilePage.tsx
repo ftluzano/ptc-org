@@ -2,14 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ArrowLeft,
   Calendar,
-  CheckCircle2,
-  Clock,
   ImagePlus,
   Save,
   Send,
-  Trash2,
   User,
-  XCircle,
   FileUp,
 } from 'lucide-react';
 import { upload } from '@vercel/blob/client';
@@ -19,7 +15,7 @@ import {
 } from '../config/org-config';
 import { useAuth } from '../hooks/useAuth';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
-import { CAMPUS_HERO_IMAGE, resolvePostImageUrl } from '../lib/mediaAssets';
+import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
 import { notifyPortalDataChanged } from '../lib/portalUpdates';
 import type { OrganizationProfile, OrgPost } from '../types/portal';
 import { FacebookPostCard } from './FacebookPostCard';
@@ -35,7 +31,7 @@ interface OrgProfilePageProps {
   onOrganizationProfileUpdated: (orgCode: string, profile: OrganizationProfile) => void;
 }
 
-type OrgViewTab = 'feed' | 'profile' | 'compose' | 'proposal' | 'submissions';
+type OrgViewTab = 'feed' | 'profile' | 'compose' | 'proposal';
 
 function readImageAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -61,7 +57,6 @@ export function OrgProfilePage({
 
   const [activeTab, setActiveTab] = useState<OrgViewTab>('feed');
   const [posts, setPosts] = useState<OrgPost[]>([]);
-  const [submissions, setSubmissions] = useState<OrgPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [organizationProfile, setOrganizationProfile] = useState<OrganizationProfile>({
     bannerDataUrl: null,
@@ -92,12 +87,12 @@ export function OrgProfilePage({
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [proposalTitle, setProposalTitle] = useState('');
   const [proposalMessage, setProposalMessage] = useState('');
   const [proposalFile, setProposalFile] = useState<File | null>(null);
   const [proposalFileInputKey, setProposalFileInputKey] = useState(0);
   const [submittingProposal, setSubmittingProposal] = useState(false);
-  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   );
@@ -124,18 +119,6 @@ export function OrgProfilePage({
       }
       const profileData = await profileRes.json();
       setOrganizationProfile(profileData.profile);
-
-      if (isOwningOfficer || user?.role === 'cessca') {
-        const subRes = await fetch(`/api/organizations/${org.code}/submissions`, {
-          headers: getAuthHeaders(),
-        });
-        if (subRes.ok) {
-          const subData = await subRes.json();
-          setSubmissions(subData.submissions ?? []);
-        }
-      } else {
-        setSubmissions([]);
-      }
     } catch (error) {
       setPosts([]);
       setFormMessage({
@@ -145,7 +128,7 @@ export function OrgProfilePage({
     } finally {
       setLoadingPosts(false);
     }
-  }, [org.code, isOwningOfficer, user?.role, getAuthHeaders]);
+  }, [org.code]);
 
   useLiveUpdates(loadOrganizationData);
 
@@ -386,6 +369,36 @@ export function OrgProfilePage({
     }
   }
 
+  async function handleDeletePost(postId: string) {
+    const post = posts.find((item) => item.id === postId);
+    if (!post || !isOwningOfficer) return;
+    if (!window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return;
+
+    setFormMessage(null);
+    setDeletingPostId(postId);
+    try {
+      const response = await fetch(
+        `/api/organizations/${org.code}/posts/${encodeURIComponent(postId)}`,
+        { method: 'DELETE', headers: getAuthHeaders() }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to delete this post.');
+      }
+
+      setPosts((current) => current.filter((item) => item.id !== postId));
+      setFormMessage({ type: 'success', text: 'Announcement deleted.' });
+      notifyPortalDataChanged();
+    } catch (error) {
+      setFormMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Unable to delete this post.',
+      });
+    } finally {
+      setDeletingPostId(null);
+    }
+  }
+
   async function handleSubmitProposal(e: React.FormEvent) {
     e.preventDefault();
     if (!proposalFile) {
@@ -441,38 +454,6 @@ export function OrgProfilePage({
       });
     } finally {
       setSubmittingProposal(false);
-    }
-  }
-
-  async function handleDeleteSubmission(item: OrgPost) {
-    const isApproved = item.status === 'approved';
-    const action = isApproved ? 'delete this approved announcement' : 'withdraw this submission';
-    if (!window.confirm(`Are you sure you want to ${action}? This cannot be undone.`)) return;
-
-    setFormMessage(null);
-    setDeletingPostId(item.id);
-    try {
-      const res = await fetch(`/api/organizations/${org.code}/posts/${encodeURIComponent(item.id)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Unable to remove this announcement.');
-      }
-      setFormMessage({
-        type: 'success',
-        text: isApproved ? 'Approved announcement deleted.' : 'Submission withdrawn.',
-      });
-      notifyPortalDataChanged();
-      await loadOrganizationData();
-    } catch (error) {
-      setFormMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'Unable to remove this announcement.',
-      });
-    } finally {
-      setDeletingPostId(null);
     }
   }
 
@@ -577,17 +558,6 @@ export function OrgProfilePage({
                 }`}
               >
                 Send Proposal to CESSCA
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('submissions')}
-                className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer sm:px-3.5 sm:text-xs ${
-                  activeTab === 'submissions'
-                    ? 'bg-[#166534] text-white'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                My Submissions ({submissions.length})
               </button>
             </div>
           )}
@@ -1101,101 +1071,6 @@ export function OrgProfilePage({
             </form>
           )}
 
-          {activeTab === 'submissions' && isOwningOfficer && (
-            <div className="space-y-3">
-              {submissions.length === 0 ? (
-                <div className="bg-white border border-stone-200 rounded-xl p-10 text-center space-y-3">
-                  <p className="text-sm font-medium text-stone-900">No announcements published yet.</p>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('compose')}
-                    className="px-4 py-2 text-xs font-medium text-white bg-[#166534] rounded-lg hover:bg-[#14532d] transition-colors cursor-pointer"
-                  >
-                    Publish First Announcement
-                  </button>
-                </div>
-              ) : (
-                submissions.map((item) => {
-                  const thumbUrl = resolvePostImageUrl(item.imageUrl);
-                  return (
-                    <div
-                      key={item.id}
-                      className="space-y-3 rounded-xl border border-stone-200 bg-white p-4"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-xs text-stone-500">
-                            <span className="font-mono tabular-nums">{item.letterRef}</span>
-                            <span aria-hidden="true">·</span>
-                            <span>Event: {item.eventDate}</span>
-                          </div>
-                          <h3 className="text-base font-semibold text-stone-900">{item.title}</h3>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {item.status === 'approved' && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
-                              <CheckCircle2 className="w-4 h-4" />
-                              Published
-                            </span>
-                          )}
-                          {item.status === 'pending' && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
-                              <Clock className="w-4 h-4" />
-                              Pending Review
-                            </span>
-                          )}
-                          {item.status === 'rejected' && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700">
-                              <XCircle className="w-4 h-4" />
-                              Rejected
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-stone-600 leading-relaxed">{item.caption}</p>
-
-                      {thumbUrl && (
-                        <img
-                          src={thumbUrl}
-                          alt={item.title}
-                          referrerPolicy="no-referrer"
-                          className="w-48 h-28 object-cover rounded-lg border border-stone-200"
-                        />
-                      )}
-
-                      {item.feedback && (
-                        <div className="p-3 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700">
-                          <span className="font-semibold text-stone-900">CESSCA Remarks: </span>
-                          {item.feedback}
-                        </div>
-                      )}
-
-                      <div className="pt-2 flex justify-end">
-                        <button
-                          type="button"
-                          disabled={deletingPostId !== null}
-                          onClick={() => void handleDeleteSubmission(item)}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-red-700 hover:underline disabled:opacity-50 cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>
-                            {deletingPostId === item.id
-                              ? 'Deleting...'
-                              : item.status === 'approved'
-                                ? 'Delete Announcement'
-                                : 'Withdraw Submission'}
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          )}
-
           {activeTab === 'feed' && (
             <div className="space-y-4">
               {loadingPosts ? (
@@ -1215,6 +1090,8 @@ export function OrgProfilePage({
                       organizationImageUrl={organizationProfile.avatarDataUrl}
                       showEngagementActions={false}
                       onOpenLightbox={onOpenLightbox}
+                      onDelete={isOwningOfficer ? (postId) => void handleDeletePost(postId) : undefined}
+                      deleting={deletingPostId === post.id}
                     />
                   ))}
                 </div>

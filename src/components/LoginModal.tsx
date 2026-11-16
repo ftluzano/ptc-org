@@ -4,16 +4,18 @@ import {
   CESSCA_ADMIN_NAME,
   ORGANIZATIONS,
 } from '../config/org-config';
+import { OrgEmblem } from './OrgEmblem';
 import { useAuth } from '../hooks/useAuth';
-import type { AuthUser } from '../types/portal';
+import type { AuthUser, OrgStats } from '../types/portal';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthenticated: (user: AuthUser) => void;
+  statsByCode: Record<string, OrgStats>;
 }
 
-export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps) {
+export function LoginModal({ isOpen, onClose, onAuthenticated, statsByCode }: LoginModalProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -161,12 +163,7 @@ export function LoginModal({ isOpen, onClose, onAuthenticated }: LoginModalProps
                       : 'border-stone-200 bg-white hover:border-stone-400 hover:bg-stone-50'
                   }`}
                 >
-                  <span
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[9px] font-mono font-semibold text-white sm:h-8 sm:w-8 sm:text-[10px]"
-                    style={{ backgroundColor: org.accentColor }}
-                  >
-                    {org.shortName.slice(0, 3).toUpperCase()}
-                  </span>
+                  <OrgEmblem org={org} size="sm" imageUrl={statsByCode[org.code]?.avatarUrl} />
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-semibold text-stone-900">
                       {org.shortName}

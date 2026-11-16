@@ -14,6 +14,9 @@ import { LoginModal } from './components/LoginModal';
 
 function parseRouteFromLocation(): ActiveRoute {
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (pathname === '/') {
+    return { page: 'about' };
+  }
   if (pathname === '/organizations') {
     return { page: 'organizations' };
   }
@@ -59,6 +62,12 @@ function PortalShell() {
   const [statsByCode, setStatsByCode] = useState<Record<string, OrgStats>>({});
   const [loginOpen, setLoginOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ imageUrl: string; caption: string } | null>(null);
+
+  useEffect(() => {
+    if (window.location.pathname.replace(/\/+$/, '') === '') {
+      window.history.replaceState(null, '', '/about');
+    }
+  }, []);
 
   const navigate = useCallback((nextRoute: ActiveRoute) => {
     setRoute(nextRoute);
@@ -206,6 +215,7 @@ function PortalShell() {
         isOpen={loginOpen}
         onClose={() => setLoginOpen(false)}
         onAuthenticated={handleAuthenticated}
+        statsByCode={statsByCode}
       />
 
       {/* Full-resolution Image Lightbox */}

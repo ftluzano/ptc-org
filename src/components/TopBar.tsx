@@ -27,7 +27,7 @@ export function TopBar({ route, onNavigate, onOpenLogin }: TopBarProps) {
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-5 sm:px-6">
         <button
           type="button"
-          onClick={() => onNavigate({ page: 'home' })}
+          onClick={() => onNavigate({ page: 'about' })}
           className="group inline-flex shrink-0 items-center gap-2 cursor-pointer sm:gap-2.5"
         >
           <img src={ptcLogo} alt="Pateros Technological College seal" className="h-8 w-8 shrink-0 object-contain sm:h-10 sm:w-10" />

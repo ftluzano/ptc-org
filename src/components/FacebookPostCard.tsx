@@ -56,8 +56,11 @@ export function FacebookPostCard({
         shortName: post.orgShortName,
         accentColor: '#166534',
       };
-  const resolvedImg = resolvePostImageUrl(post.imageUrl);
-  const [imgError, setImgError] = useState(false);
+  const imageUrls = post.imageUrls?.length ? post.imageUrls : post.imageUrl ? [post.imageUrl] : [];
+  const resolvedImages = imageUrls
+    .map(resolvePostImageUrl)
+    .filter((imageUrl): imageUrl is string => imageUrl !== null);
+  const [failedImages, setFailedImages] = useState<string[]>([]);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [liking, setLiking] = useState(false);
@@ -194,30 +197,49 @@ export function FacebookPostCard({
         </p>
       </div>
 
-      {resolvedImg && !imgError && (
-        <div className="border-y border-stone-200 bg-stone-100">
-          <button
-            type="button"
-            onClick={() => onOpenLightbox(resolvedImg, post.title)}
-            aria-label={`View full-size image: ${post.title}`}
-            title="View full-size image"
-            className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#166534] cursor-zoom-in"
-          >
-            <img
-              src={resolvedImg}
-              alt={post.title}
-              referrerPolicy="no-referrer"
-              onError={() => setImgError(true)}
-              className="w-full max-h-[440px] object-cover"
-            />
-          </button>
-        </div>
-      )}
-
-      {resolvedImg && imgError && (
-        <div className="flex flex-col items-center justify-center gap-2 border-y border-stone-200 bg-stone-100 px-6 py-12 text-stone-400">
-          <ImageOff className="w-6 h-6" />
-          <span className="text-xs">{post.title}</span>
+      {resolvedImages.length > 0 && (
+        <div
+          className={`grid border-y border-stone-200 bg-stone-100 ${
+            resolvedImages.length === 1 ? 'grid-cols-1' : 'grid-cols-2 gap-1'
+          }`}
+        >
+          {resolvedImages.map((imageUrl, index) => {
+            const imageCaption =
+              resolvedImages.length === 1
+                ? post.title
+                : `${post.title} — Image ${index + 1} of ${resolvedImages.length}`;
+            return (
+              <div
+                key={`${imageUrl}-${index}`}
+                className={resolvedImages.length > 1 ? 'aspect-[4/3] overflow-hidden' : ''}
+              >
+                {failedImages.includes(imageUrl) ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 px-6 py-12 text-stone-400">
+                    <ImageOff className="h-6 w-6" />
+                    <span className="text-xs">{imageCaption}</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onOpenLightbox(imageUrl, imageCaption)}
+                    aria-label={`View full-size image: ${imageCaption}`}
+                    title="View full-size image"
+                    className="block h-full w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#166534] cursor-zoom-in"
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={imageCaption}
+                      referrerPolicy="no-referrer"
+                      onError={() => setFailedImages((current) => [...current, imageUrl])}
+                      className={`w-full object-cover ${
+                        resolvedImages.length === 1 ? 'max-h-[440px]' : 'h-full'
+                      }`}
+                    />
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

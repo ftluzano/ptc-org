@@ -92,7 +92,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
         <section
           id="about-ptc"
           aria-label="About Pateros Technological College"
-          className="scroll-mt-24 space-y-4 sm:space-y-5"
+          className="portal-stagger scroll-mt-24 space-y-4 sm:space-y-5"
         >
         {scrollToAbout && (
           <div className="relative flex min-h-64 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl bg-emerald-950 px-5 py-8 text-center shadow-lg sm:min-h-80 sm:gap-4">
@@ -119,7 +119,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             About PTC
           </h1>
         </div>
-        <div className="space-y-5 rounded-2xl border border-stone-200 bg-white p-5 text-base leading-8 text-stone-700 shadow-sm sm:p-7">
+        <div className="portal-interactive-card space-y-5 rounded-2xl border border-stone-200 bg-white p-5 text-base leading-8 text-stone-700 shadow-sm sm:p-7">
           {ptcHistory.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
@@ -136,12 +136,12 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
               THE PRESIDENT
             </h2>
           </div>
-          <article className="mx-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-md sm:p-6">
+          <article className="portal-interactive-card group mx-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-md sm:p-6">
             <figure className="flex w-full max-w-[320px] items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-2 shadow-md">
               <img
                 src={currentPresidentImage}
                 alt="Dr. Analiza F. Arcega"
-                className="max-h-[420px] w-full rounded-xl object-contain"
+                className="portal-interactive-image max-h-[420px] w-full rounded-xl object-contain"
                 loading="lazy"
               />
             </figure>
@@ -162,32 +162,52 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
           >
             FORMER ADMINISTRATORS
           </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
+          <div className="portal-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
             {formerAdministrators.map((administrator) => (
               <figure
                 key={administrator.src}
-                className="aspect-[0.64] overflow-hidden rounded-xl border border-stone-200 bg-[#eeedff] shadow-sm"
+                className="portal-interactive-card group aspect-[0.64] overflow-hidden rounded-xl border border-stone-200 bg-[#eeedff] shadow-sm"
               >
                 <img
                   src={administrator.src}
                   alt={administrator.alt}
-                  className="h-full w-full object-fill"
+                  className="portal-interactive-image h-full w-full object-fill"
                   loading="lazy"
                 />
               </figure>
             ))}
           </div>
         </section>
-        <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+        <section
+          aria-labelledby="ptc-core-values-heading"
+          className="portal-interactive-card rounded-2xl border border-transparent bg-[#166534] px-5 py-7 text-white shadow-sm sm:px-8 sm:py-9"
+        >
+          <h2
+            id="ptc-core-values-heading"
+            className="text-center font-display text-2xl font-semibold sm:text-3xl"
+          >
+            CORE VALUES
+          </h2>
+          <ul className="portal-stagger mx-auto mt-5 w-fit list-disc space-y-1 pl-5 text-left text-base font-semibold sm:text-lg">
+            <li>Responsibility</li>
+            <li>Creativity</li>
+            <li>Integrity</li>
+            <li>Commitment</li>
+            <li>Compassion</li>
+            <li>Excellence</li>
+            <li>Environment Concern</li>
+          </ul>
+        </section>
+        <div className="portal-stagger grid gap-4 sm:grid-cols-2 sm:gap-5">
           {landingImages.map((image) => (
             <figure
               key={image.src}
-              className="aspect-[1.4] overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm"
+              className="portal-interactive-card group aspect-[1.4] overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm"
             >
               <img
                 src={image.src}
                 alt={image.alt}
-                className={`h-full w-full object-fill ${image.trimEdge ? 'scale-[1.02]' : ''}`}
+                className={`portal-interactive-image h-full w-full object-fill ${image.trimEdge ? 'scale-[1.02]' : ''}`}
                 loading="lazy"
               />
             </figure>

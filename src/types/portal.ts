@@ -30,6 +30,7 @@ export interface OrgPost {
   eventDate: string;
   caption: string;
   imageUrl: string | null;
+  imageUrls?: string[];
   status: PostStatus;
   feedback: string | null;
   likesCount: number;

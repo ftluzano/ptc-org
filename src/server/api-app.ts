@@ -201,12 +201,28 @@ async function incrementPortalLiveVersion() {
   );
 }
 
+function parsePostImageUrls(value: unknown): string[] {
+  if (typeof value !== 'string' || value.length === 0) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (imageUrl): imageUrl is string => typeof imageUrl === 'string' && imageUrl.length > 0
+      );
+    }
+  } catch {
+    // Older posts store a single image URL as plain text.
+  }
+  return [value];
+}
+
 function mapRowToOrgPost(
   row: Record<string, unknown>,
   orgCode: string,
   names?: { fullName: string; shortName: string }
 ): OrgPost {
   const org = getOrgByCode(orgCode);
+  const imageUrls = parsePostImageUrls(row.image_url);
   return {
     id: String(row.id),
     letterRef: String(row.letter_ref),
@@ -217,7 +233,8 @@ function mapRowToOrgPost(
     title: String(row.title),
     eventDate: String(row.event_date),
     caption: String(row.caption),
-    imageUrl: row.image_url ? String(row.image_url) : null,
+    imageUrl: imageUrls.length === 1 ? imageUrls[0] : null,
+    imageUrls,
     status: String(row.status) as OrgPost['status'],
     feedback: row.feedback ? String(row.feedback) : null,
     likesCount: Number(row.likes_count ?? 0),
@@ -227,6 +244,7 @@ function mapRowToOrgPost(
 }
 
 function mapRowToQueueItem(row: Record<string, unknown>): SubmissionQueueItem {
+  const imageUrls = parsePostImageUrls(row.image_url);
   return {
     id: String(row.id),
     letterRef: String(row.letter_ref),
@@ -237,7 +255,7 @@ function mapRowToQueueItem(row: Record<string, unknown>): SubmissionQueueItem {
     title: String(row.title),
     eventDate: String(row.event_date),
     caption: String(row.caption),
-    imageUrl: row.image_url ? String(row.image_url) : null,
+    imageUrl: imageUrls[0] ?? null,
     status: String(row.status) as SubmissionQueueItem['status'],
     feedback: row.feedback ? String(row.feedback) : null,
     submittedAt: String(row.submitted_at),
@@ -687,7 +705,61 @@ export async function createApiApp() {
       const title = String(req.body?.title ?? '').trim();
       const eventDate = String(req.body?.eventDate ?? '').trim();
       const caption = String(req.body?.caption ?? '').trim();
-      const imageUrl = req.body?.imageUrl ? String(req.body.imageUrl).trim() : null;
+      if (req.body?.imageUrls !== undefined && !Array.isArray(req.body.imageUrls)) {
+        return res.status(400).json({ error: 'Images must be provided as a list.' });
+      }
+      const submittedImages: unknown[] = Array.isArray(req.body?.imageUrls)
+        ? req.body.imageUrls
+        : req.body?.imageUrl
+          ? [req.body.imageUrl]
+          : [];
+      if (submittedImages.length > 5) {
+        return res.status(400).json({ error: 'An announcement can include up to 5 images.' });
+      }
+      const imageUrls: string[] = [];
+      for (const imageUrl of submittedImages) {
+        if (typeof imageUrl !== 'string') {
+          return res.status(400).json({ error: 'Each image must be a valid image upload.' });
+        }
+        const match = imageUrl.match(/^data:image\/(png|jpeg|jpg|webp|gif);base64,(.+)$/);
+        if (match) {
+          const imageSize = Buffer.from(match[2], 'base64').byteLength;
+          if (imageSize === 0 || imageSize > 5 * 1024 * 1024) {
+            return res.status(400).json({ error: 'Each image must be larger than 0 bytes and no larger than 5 MB.' });
+          }
+        } else {
+          let blobUrl: URL;
+          try {
+            blobUrl = new URL(imageUrl);
+          } catch {
+            return res.status(400).json({ error: 'Each attachment must be an uploaded image.' });
+          }
+          const pathname = blobUrl.pathname.slice(1);
+          const requiredPrefix = `posts/${org.code}/${user.uid}/`;
+          if (
+            blobUrl.protocol !== 'https:' ||
+            !isValidProposalPath(pathname, requiredPrefix)
+          ) {
+            return res.status(400).json({ error: 'Each image must belong to this organization officer.' });
+          }
+          const blob = await headBlob(pathname);
+          if (
+            blob.url !== imageUrl ||
+            !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(blob.contentType ?? '') ||
+            blob.size <= 0 ||
+            blob.size > 5 * 1024 * 1024
+          ) {
+            return res.status(400).json({ error: 'Each attachment must be a PNG, JPG, WebP, or GIF image no larger than 5 MB.' });
+          }
+        }
+        imageUrls.push(imageUrl);
+      }
+      const imageUrl =
+        imageUrls.length === 0
+          ? null
+          : imageUrls.length === 1
+            ? imageUrls[0]
+            : JSON.stringify(imageUrls);
 
       if (!title || title.length < 3 || title.length > 160) {
         return res.status(400).json({ error: 'Event title must be between 3 and 160 characters.' });
@@ -725,7 +797,8 @@ export async function createApiApp() {
           title,
           eventDate,
           caption,
-          imageUrl,
+          imageUrl: imageUrls.length === 1 ? imageUrls[0] : null,
+          imageUrls,
           status: 'approved',
           feedback: null,
           likesCount: 0,
@@ -782,6 +855,37 @@ export async function createApiApp() {
     } catch (error) {
       console.error('Failed to delete post:', error);
       return res.status(500).json({ error: 'Failed to delete submission.' });
+    }
+  });
+
+  app.post('/api/posts/upload', async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const body = req.body as HandleUploadBody;
+      const result = await handleUpload({
+        body,
+        request: req,
+        onBeforeGenerateToken: async (pathname) => {
+          const user = req.authUser;
+          if (!user || user.role !== 'president' || !user.orgCode) {
+            throw new Error('Only an authenticated organization officer may upload post images.');
+          }
+          const requiredPrefix = `posts/${user.orgCode}/${user.uid}/`;
+          if (!isValidProposalPath(pathname, requiredPrefix)) {
+            throw new Error('Invalid post image upload path.');
+          }
+          return {
+            allowedContentTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
+            maximumSizeInBytes: 5 * 1024 * 1024,
+            addRandomSuffix: true,
+          };
+        },
+      });
+      return res.json(result);
+    } catch (error) {
+      console.error('Post image upload authorization failed:', error);
+      return res.status(400).json({
+        error: error instanceof Error ? error.message : 'Unable to authorize this image upload.',
+      });
     }
   });
 

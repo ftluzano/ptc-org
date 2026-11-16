@@ -7,6 +7,7 @@ import {
   Send,
   User,
   FileUp,
+  X,
 } from 'lucide-react';
 import { upload } from '@vercel/blob/client';
 import {
@@ -32,6 +33,15 @@ interface OrgProfilePageProps {
 }
 
 type OrgViewTab = 'feed' | 'profile' | 'compose' | 'proposal';
+
+interface PostImageAttachment {
+  id: string;
+  previewUrl: string;
+  uploadedUrl: string;
+}
+
+const MAX_POST_IMAGES = 5;
+const MAX_POST_IMAGE_SIZE = 5 * 1024 * 1024;
 
 function readImageAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -83,8 +93,7 @@ export function OrgProfilePage({
   const [title, setTitle] = useState('');
   const [eventDate, setEventDate] = useState('2026-12-10');
   const [caption, setCaption] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [postImages, setPostImages] = useState<PostImageAttachment[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
@@ -153,42 +162,62 @@ export function OrgProfilePage({
     setAboutChanged(false);
     setOrganizationNameChanged(false);
     setPresidentNameChanged(false);
+    setPostImages([]);
     void loadOrganizationData();
   }, [loadOrganizationData]);
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setFormMessage({ type: 'error', text: 'Image file must be 5 MB or smaller.' });
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    if (postImages.length + files.length > MAX_POST_IMAGES) {
+      setFormMessage({ type: 'error', text: `Choose up to ${MAX_POST_IMAGES} images per announcement.` });
+      return;
+    }
+    if (files.some((file) => !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type))) {
+      setFormMessage({ type: 'error', text: 'Choose PNG, JPEG, WebP, or GIF images.' });
+      return;
+    }
+    if (files.some((file) => file.size === 0 || file.size > MAX_POST_IMAGE_SIZE)) {
+      setFormMessage({ type: 'error', text: 'Each image must be larger than 0 bytes and no larger than 5 MB.' });
       return;
     }
 
     setFormMessage(null);
     setUploadingImage(true);
     try {
-      const dataUrl = await readImageAsDataUrl(file);
-      setImagePreview(dataUrl);
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ dataUrl }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Image upload failed.');
+      const results: Array<{ attachment: PostImageAttachment } | { error: string }> = await Promise.all(
+        files.map(async (file): Promise<{ attachment: PostImageAttachment } | { error: string }> => {
+          try {
+            const previewUrl = await readImageAsDataUrl(file);
+            const pathname = `posts/${org.code}/${user?.uid}/${crypto.randomUUID()}`;
+            const blob = await upload(pathname, file, {
+              access: 'public',
+              handleUploadUrl: '/api/posts/upload',
+              headers: getAuthHeaders(),
+              contentType: file.type,
+              multipart: true,
+            });
+            return {
+              attachment: {
+                id: crypto.randomUUID(),
+                previewUrl,
+                uploadedUrl: blob.url,
+              },
+            };
+          } catch (error) {
+            return {
+              error: error instanceof Error ? error.message : 'Unable to upload image.',
+            };
+          }
+        })
+      );
+      const uploaded = results.flatMap((result) => ('attachment' in result ? [result.attachment] : []));
+      const errors = results.flatMap((result) => ('error' in result ? [result.error] : []));
+      setPostImages((current) => [...current, ...uploaded]);
+      if (errors.length > 0) {
+        setFormMessage({ type: 'error', text: errors[0] });
       }
-      setUploadedImageUrl(data.url);
-    } catch (err) {
-      setFormMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Unable to upload image.',
-      });
-      setImagePreview(null);
-      setUploadedImageUrl(null);
     } finally {
       setUploadingImage(false);
     }
@@ -341,7 +370,7 @@ export function OrgProfilePage({
           title,
           eventDate,
           caption,
-          imageUrl: uploadedImageUrl,
+          imageUrls: postImages.map((image) => image.uploadedUrl),
         }),
       });
       const data = await res.json();
@@ -350,8 +379,7 @@ export function OrgProfilePage({
       }
       setTitle('');
       setCaption('');
-      setImagePreview(null);
-      setUploadedImageUrl(null);
+      setPostImages([]);
       setFormMessage({
         type: 'success',
         text: `Announcement published to the ${displayOrg.shortName} page and campus feed.`,
@@ -473,12 +501,12 @@ export function OrgProfilePage({
       </div>
 
       <section className="overflow-hidden rounded-[20px] border border-stone-200 bg-white shadow-[0_22px_40px_rgba(15,23,42,0.08)] sm:rounded-[26px]">
-        <div className="relative h-28 overflow-hidden bg-stone-200 sm:h-44">
+        <div className="relative aspect-[13/5] overflow-hidden rounded-t-[19px] bg-stone-100 sm:rounded-t-[25px]">
           <img
             src={organizationProfile.bannerDataUrl || CAMPUS_HERO_IMAGE}
             alt={`${displayOrg.fullName} cover`}
             referrerPolicy="no-referrer"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         </div>
 
@@ -760,7 +788,7 @@ export function OrgProfilePage({
                           : organizationProfile.bannerDataUrl || CAMPUS_HERO_IMAGE
                       }
                       alt={`${displayOrg.fullName} banner preview`}
-                      className="h-36 w-full object-cover"
+                      className="aspect-[13/5] w-full bg-stone-100 object-contain"
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
@@ -927,40 +955,57 @@ export function OrgProfilePage({
 
               <div>
                 <label className="block text-xs font-medium text-stone-700 mb-1.5">
-                  Event Poster / Photo Attachment (Optional, max 5 MB)
+                  Event Photos (Optional, up to 5 images, max 5 MB each)
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 border border-stone-200 rounded-lg cursor-pointer transition-colors">
+                  <label className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-stone-700 bg-stone-100 border border-stone-200 rounded-lg transition-colors ${
+                    uploadingImage || postImages.length >= MAX_POST_IMAGES
+                      ? 'cursor-not-allowed opacity-60'
+                      : 'cursor-pointer hover:bg-stone-200'
+                  }`}>
                     <ImagePlus className="w-4 h-4" />
-                    <span>{uploadingImage ? 'Uploading...' : 'Choose Image File'}</span>
+                    <span>{uploadingImage ? 'Uploading...' : 'Choose Images'}</span>
                     <input
                       type="file"
                       accept="image/png,image/jpeg,image/webp,image/gif"
+                      multiple
+                      disabled={uploadingImage || postImages.length >= MAX_POST_IMAGES}
                       onChange={(e) => void handleFileSelect(e)}
                       className="sr-only"
                     />
                   </label>
-                  {imagePreview && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImagePreview(null);
-                        setUploadedImageUrl(null);
-                      }}
-                      className="text-xs text-red-700 hover:underline cursor-pointer"
-                    >
-                      Remove image
-                    </button>
-                  )}
+                  <span className="text-xs text-stone-500">
+                    {postImages.length}/{MAX_POST_IMAGES} selected
+                  </span>
                 </div>
 
-                {imagePreview && (
-                  <div className="mt-3 border border-stone-200 rounded-lg overflow-hidden max-w-md">
-                    <img
-                      src={imagePreview}
-                      alt="Event attachment preview"
-                      className="w-full max-h-56 object-cover"
-                    />
+                {postImages.length > 0 && (
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {postImages.map((image, index) => (
+                      <div
+                        key={image.id}
+                        className="relative overflow-hidden rounded-lg border border-stone-200 bg-stone-100"
+                      >
+                        <img
+                          src={image.previewUrl}
+                          alt={`Event attachment ${index + 1}`}
+                          className="aspect-[4/3] w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          disabled={uploadingImage}
+                          onClick={() =>
+                            setPostImages((current) =>
+                              current.filter((attachment) => attachment.id !== image.id)
+                            )
+                          }
+                          aria-label={`Remove image ${index + 1}`}
+                          className="absolute right-2 top-2 rounded-full bg-stone-950/75 p-1.5 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

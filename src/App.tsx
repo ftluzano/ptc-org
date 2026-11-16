@@ -17,6 +17,9 @@ function parseRouteFromLocation(): ActiveRoute {
   if (pathname === '/organizations') {
     return { page: 'organizations' };
   }
+  if (pathname === '/about') {
+    return { page: 'about' };
+  }
   if (pathname === '/feed') {
     return { page: 'feed' };
   }
@@ -37,6 +40,8 @@ function routeToPath(route: ActiveRoute): string {
   switch (route.page) {
     case 'home':
       return '/';
+    case 'about':
+      return '/about';
     case 'organizations':
       return '/organizations';
     case 'org':
@@ -156,7 +161,9 @@ function PortalShell() {
       />
 
       <div className="flex-1">
-        {route.page === 'home' && <LandingPage />}
+        {(route.page === 'home' || route.page === 'about') && (
+          <LandingPage scrollToAbout={route.page === 'about'} />
+        )}
 
         {route.page === 'organizations' && (
           <OrgDirectoryPage

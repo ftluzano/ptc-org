@@ -102,7 +102,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
           ))}
         </div>
         <section aria-labelledby="ptc-president-heading" className="space-y-4">
-          <div>
+          <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
               2017–Present
             </p>
@@ -113,7 +113,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
               THE PRESIDENT
             </h2>
           </div>
-          <article className="flex flex-col items-center gap-5 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:flex-row sm:p-6">
+          <article className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-stone-200 bg-white p-4 text-center shadow-md">
             <figure className="flex w-full max-w-[280px] items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-2 shadow-md">
               <img
                 src={currentPresidentImage}
@@ -122,7 +122,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
                 loading="lazy"
               />
             </figure>
-            <div className="text-center sm:text-left">
+            <div>
               <h3 className="font-display text-xl font-semibold text-stone-900">
                 Dr. Analiza F. Arcega
               </h3>

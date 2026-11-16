@@ -160,7 +160,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             id="ptc-former-administrators-heading"
             className="text-center font-display text-2xl font-semibold text-stone-900 sm:text-3xl"
           >
-            Former Administrators
+            FORMER ADMINISTRATORS
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
             {formerAdministrators.map((administrator) => (

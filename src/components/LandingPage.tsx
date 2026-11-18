@@ -1,5 +1,6 @@
 import React from 'react';
 import { CAMPUS_HERO_IMAGE } from '../lib/mediaAssets';
+import aboutUsVideo from '../assets/images/About-us-video.mp4';
 import ptcLogo from '../assets/images/ptc logo.png';
 import currentPresidentImage from '../assets/images/ptc-president-analiza-arcega.png';
 import angelusPonceImage from '../assets/images/ptc-administrator-angelus-ponce.png';
@@ -182,6 +183,50 @@ function HymnVideo({ videoId, title }: { videoId: string; title: string }) {
   );
 }
 
+function AboutUsVideo() {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [playbackBlocked, setPlaybackBlocked] = React.useState(false);
+
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          void video.play().catch(() => setPlaybackBlocked(true));
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.35 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-2xl border border-white/20 shadow-lg">
+      <video
+        ref={videoRef}
+        src={aboutUsVideo}
+        controls
+        muted
+        playsInline
+        preload="metadata"
+        aria-label="About Pateros Technological College video"
+        onPlaying={() => setPlaybackBlocked(false)}
+        className="aspect-video w-full bg-black object-contain"
+      />
+      {playbackBlocked && (
+        <p className="px-3 py-2 text-center text-sm text-white/80">
+          Select play to start the About PTC video.
+        </p>
+      )}
+    </div>
+  );
+}
+
 interface LandingPageProps {
   showAbout?: boolean;
   scrollToAbout?: boolean;
@@ -248,6 +293,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             About PTC
           </h1>
         </div>
+        <AboutUsVideo />
         <div className="mx-auto max-w-5xl space-y-5 px-3 text-base leading-8 text-white/90 sm:px-7">
           {ptcHistory.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>

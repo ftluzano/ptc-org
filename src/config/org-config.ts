@@ -9,6 +9,7 @@ export interface OrganizationConfig {
   shortName: string;
   fullName: string;
   aboutText?: string;
+  facebookUrl?: string;
   president: string;
   scope: string;
   category: OrgCategory;
@@ -30,6 +31,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     code: 'ssc',
     shortName: 'SSC',
     fullName: 'Supreme Student Council',
+    facebookUrl: 'https://www.facebook.com/ptcssc',
     president: 'Shane Pol',
     scope: 'Supreme Student Council',
     category: 'Governance & Media',
@@ -47,6 +49,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     code: 'plumage',
     shortName: 'Plumage',
     fullName: 'The Plumage Student Publication',
+    facebookUrl: 'https://www.facebook.com/ptc.theplumage',
     president: 'Nicole Sam Francisco',
     scope: 'Student Publication / Media',
     category: 'Governance & Media',
@@ -64,6 +67,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     code: 'image',
     shortName: 'IMAGE',
     fullName: 'Information Technology & Graphics Guild',
+    facebookUrl: 'https://www.facebook.com/ptcimage',
     president: 'Gab',
     scope: 'Information Technology / Graphics Guild',
     category: 'Technology & Academics',
@@ -81,6 +85,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     code: 'athletes',
     shortName: 'Athletes',
     fullName: 'PTC Sports & Athletics Organization',
+    facebookUrl: 'https://www.facebook.com/profile.php?id=61578924877075',
     president: 'Leonard Bertulfo',
     scope: 'Sports and Athletics Organization',
     category: 'Athletics & Arts',
@@ -98,6 +103,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     code: 'jpasaps',
     shortName: 'JPASAPS',
     fullName: 'Junior Philippine Association of Administrative Professionals and Secretaries',
+    facebookUrl: 'https://www.facebook.com/ptcofadsocietyy',
     president: 'Ethel Tangente',
     scope: 'Junior Philippine Association of Administrative Professionals and Secretaries',
     category: 'Business & Leadership',
@@ -115,6 +121,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     code: 'jpcs',
     shortName: 'JPCS',
     fullName: 'Junior Philippine Computer Society',
+    facebookUrl: 'https://www.facebook.com/jpcsptc',
     president: 'Hersy M. Baluyos',
     scope: 'Junior Philippine Computer Society',
     category: 'Technology & Academics',
@@ -132,6 +139,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     code: 'pmo',
     shortName: 'PMO',
     fullName: 'Peer Mentors Organization',
+    facebookUrl: 'https://www.facebook.com/PTCMentorship.Org',
     president: 'Mark Rabara',
     scope: 'Peer facilitators / Peer Mentors Organization',
     category: 'Business & Leadership',
@@ -217,6 +225,7 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     code: 'dlc',
     shortName: 'DLC',
     fullName: 'Debate and Leadership Club',
+    facebookUrl: 'https://www.facebook.com/profile.php?id=61577373401043',
     president: 'Juztine Reyes',
     scope: 'Debate and Leadership Club',
     category: 'Business & Leadership',

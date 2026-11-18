@@ -30,6 +30,13 @@ const landingImages = [
   { src: studentLifeImage, alt: 'Close-up of a student wearing glasses on campus', trimEdge: false },
 ];
 
+const partnerLinks = [
+  { acronym: 'CHED', label: 'www.ched.gov.ph', href: 'https://ched.gov.ph/' },
+  { acronym: 'PATEROS', label: 'www.pateros.gov.ph/', href: 'https://pateros.gov.ph/' },
+  { acronym: 'ALCUCOA', label: 'www.alcucoa.org.ph', href: 'https://www.alcucoa.org.ph/' },
+  { acronym: 'DepEd', label: 'www.deped.gov.ph', href: 'https://www.deped.gov.ph/' },
+];
+
 const ptcHistory = [
   'Pateros Technological College (PTC) is a technical-vocational school established on January 29, 1993 by virtue of Municipal Ordinance No. 93-07. It started its operation on August 16, 1993, initially offering short term and two-year Associate in Computer Science, Computer Secretarial Science, and Computer Technology courses. Systematrix Computer Education and Services, Inc. (SCESI) became the partner group of PTC through Municipal Resolution No. 64 – 95 authorizing the Municipality of Pateros to sign a Memorandum of Agreement with SCESI.',
   'The partnership between PTC and SCESI ended in October, 1995. Keeping up with the goal to continue its technical-vocational advocacy, PTC forged another linkage, this time with the Technological University of the Philippines (TUP). On September 26, 1995, PTC became the recipient of the Adopt-A-School program of TUP through another Memorandum of Agreement. The linkage gave birth to the first four-year Bachelor of Computer Science program in the academic year 1997 – 1998. PTC also became TUP’s ally in the off-campus training of the latter’s undergraduate and graduate students.',
@@ -553,6 +560,47 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
                 </div>
               ))}
             </div>
+          ))}
+        </section>
+        {scrollToAbout && (
+          <div className="relative flex min-h-64 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl bg-emerald-950 px-5 py-8 text-center shadow-lg sm:min-h-80 sm:gap-4">
+            <img
+              src={CAMPUS_HERO_IMAGE}
+              alt=""
+              aria-hidden="true"
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 h-full w-full object-cover object-center opacity-40"
+            />
+            <div className="absolute inset-0 bg-emerald-950/60" />
+            <img
+              src={ptcLogo}
+              alt="Pateros Technological College seal"
+              className="relative z-10 h-24 w-24 object-contain drop-shadow-lg sm:h-32 sm:w-32"
+            />
+            <h1 className="relative z-10 max-w-3xl font-sans text-2xl font-extrabold uppercase tracking-wide text-white drop-shadow-[0_2px_3px_rgba(20,83,45,0.9)] sm:text-4xl">
+              Pateros Technological College
+            </h1>
+          </div>
+        )}
+        <section aria-label="Partner institution websites" className="grid gap-3 sm:grid-cols-2">
+          {partnerLinks.map((link) => (
+            <a
+              key={link.acronym}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-w-0 items-center gap-4 rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white/90 shadow-sm backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/90 px-1 text-center text-[9px] font-extrabold leading-tight text-emerald-950"
+              >
+                {link.acronym}
+              </span>
+              <span className="min-w-0 break-all text-sm font-semibold sm:text-base">
+                {link.label}
+              </span>
+            </a>
           ))}
         </section>
       </section>

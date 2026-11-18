@@ -11,6 +11,7 @@ import { OrgProfilePage } from './components/OrgProfilePage';
 import { GlobalFeedPage } from './components/GlobalFeedPage';
 import { CesscaAdminPage } from './components/CesscaAdminPage';
 import { LoginModal } from './components/LoginModal';
+import { SiteFooter } from './components/SiteFooter';
 
 function parseRouteFromLocation(): ActiveRoute {
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
@@ -210,6 +211,8 @@ function PortalShell() {
           />
         )}
       </div>
+
+      <SiteFooter organization={activeOrg} />
 
       <LoginModal
         isOpen={loginOpen}

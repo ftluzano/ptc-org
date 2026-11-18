@@ -3,11 +3,8 @@ import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
 import { del as deleteBlob, get as getBlob, head as headBlob } from '@vercel/blob';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
-import { cert, getApps, initializeApp, type ServiceAccount } from 'firebase-admin/app';
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import {
   ORGANIZATIONS,
-  CESSCA_ADMIN_NAME,
   getOrgByCode,
 } from '../config/org-config.ts';
 import { getCentralDb, getOrgDb, initializeAllDatabases } from '../lib/turso.ts';
@@ -27,141 +24,124 @@ interface AuthenticatedRequest extends Request {
   authStatus?: number;
 }
 
-function getFirebaseAdminAuth() {
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (!serviceAccountJson) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is required to verify Firebase ID tokens.');
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function decodeJwtPart(part: string): unknown {
+  if (!/^[A-Za-z0-9_-]+$/.test(part)) {
+    throw new Error('Invalid token encoding.');
+  }
+  return JSON.parse(Buffer.from(part, 'base64url').toString('utf8')) as unknown;
+}
+
+function verifyPhpAuthToken(token: string, secret: string): AuthUser {
+  if (token.length > 4096) {
+    throw new Error('Token is too large.');
   }
 
-  const rawAccount: unknown = JSON.parse(serviceAccountJson);
-  if (typeof rawAccount !== 'object' || rawAccount === null) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON must contain a service-account object.');
+  const [encodedHeader, encodedPayload, encodedSignature, ...extraParts] = token.split('.');
+  if (!encodedHeader || !encodedPayload || !encodedSignature || extraParts.length > 0) {
+    throw new Error('Malformed token.');
   }
-  const accountFields = rawAccount as Record<string, unknown>;
-  const projectId = process.env.FIREBASE_PROJECT_ID || accountFields.project_id;
-  const clientEmail = accountFields.client_email;
-  const privateKey = accountFields.private_key;
+
+  const header = decodeJwtPart(encodedHeader);
+  const claims = decodeJwtPart(encodedPayload);
+  if (!isRecord(header) || header.alg !== 'HS256' || header.typ !== 'JWT' || !isRecord(claims)) {
+    throw new Error('Unsupported token.');
+  }
+
+  const suppliedSignature = Buffer.from(encodedSignature, 'base64url');
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest();
   if (
-    typeof projectId !== 'string' ||
-    typeof clientEmail !== 'string' ||
-    typeof privateKey !== 'string'
+    suppliedSignature.byteLength !== expectedSignature.byteLength ||
+    !crypto.timingSafeEqual(suppliedSignature, expectedSignature)
   ) {
-    throw new Error('Firebase service-account JSON is missing project_id, client_email, or private_key.');
+    throw new Error('Invalid token signature.');
   }
 
-  const existingApp = getApps().find((app) => app.name === 'ptc-org-auth');
-  const app =
-    existingApp ??
-    initializeApp(
-      {
-        credential: cert({
-          projectId,
-          clientEmail,
-          privateKey,
-        } satisfies ServiceAccount),
-        projectId,
-      },
-      'ptc-org-auth'
-    );
-  return getAdminAuth(app);
-}
+  const now = Math.floor(Date.now() / 1000);
+  if (
+    claims.iss !== 'ptc-php-auth' ||
+    claims.aud !== 'ptc-org' ||
+    typeof claims.iat !== 'number' ||
+    typeof claims.exp !== 'number' ||
+    !Number.isInteger(claims.iat) ||
+    !Number.isInteger(claims.exp) ||
+    claims.iat > now + 30 ||
+    claims.exp <= now ||
+    claims.exp <= claims.iat ||
+    claims.exp - claims.iat > 3600 ||
+    typeof claims.sub !== 'string' ||
+    !/^[1-9]\d{0,19}$/.test(claims.sub) ||
+    typeof claims.email !== 'string' ||
+    claims.email.length > 254 ||
+    !claims.email.includes('@') ||
+    typeof claims.name !== 'string' ||
+    claims.name.trim().length === 0 ||
+    claims.name.length > 120
+  ) {
+    throw new Error('Invalid or expired token claims.');
+  }
 
-async function resolveFirebaseUser(
-  token: string
-): Promise<{ user: AuthUser | null; error?: string }> {
-  const decodedToken = await getFirebaseAdminAuth().verifyIdToken(token);
-  const email = decodedToken.email?.trim().toLowerCase();
-  if (!email) {
+  if (claims.role === 'cessca' && claims.orgCode === null) {
     return {
-      user: null,
-      error: 'This Firebase account does not have an email address.',
+      uid: claims.sub,
+      email: claims.email,
+      displayName: claims.name,
+      role: 'cessca',
+      orgCode: null,
     };
   }
 
-  const uid = decodedToken.uid;
-  const isCesscaUid = process.env.CESSCA_ADMIN_UID?.trim() === uid;
-  const matchingOrganizations = ORGANIZATIONS.filter(
-    (org) => process.env[org.uidEnvKey]?.trim() === uid
-  );
-  const matchingRoleCount = Number(isCesscaUid) + matchingOrganizations.length;
-
-  if (matchingRoleCount !== 1) {
-    if (matchingRoleCount > 1) {
-      console.error('A Firebase UID is assigned to multiple portal roles.');
+  if (claims.role === 'president' && typeof claims.orgCode === 'string') {
+    const org = getOrgByCode(claims.orgCode);
+    if (org && org.code === claims.orgCode) {
+      return {
+        uid: claims.sub,
+        email: claims.email,
+        displayName: claims.name,
+        role: 'president',
+        orgCode: org.code,
+      };
     }
-    return {
-      user: null,
-      error:
-        matchingRoleCount === 0
-          ? 'This Firebase UID is not assigned to a portal role. Check CESSCA_ADMIN_UID or the matching OFFICER_UID_* variable in Vercel.'
-          : 'This Firebase UID is assigned to multiple portal roles. Assign it to exactly one role in Vercel.',
-    };
   }
 
-  if (isCesscaUid) {
-    return {
-      user: {
-        uid,
-        email,
-        displayName: CESSCA_ADMIN_NAME,
-        role: 'cessca',
-        orgCode: null,
-      },
-    };
-  }
-
-  const org = matchingOrganizations[0];
-  if (!org) {
-    return {
-      user: null,
-      error: 'This Firebase UID is not assigned to a portal role. Check the matching OFFICER_UID_* variable in Vercel.',
-    };
-  }
-  return {
-    user: {
-      uid,
-      email,
-      displayName: org.president,
-      role: 'president',
-      orgCode: org.code,
-    },
-  };
+  throw new Error('Invalid token role.');
 }
 
-async function resolveFirebaseAuth(
+function getAuthCookie(req: Request): string | null {
+  const cookies = req.headers.cookie?.split(';') ?? [];
+  const cookie = cookies.find((part) => part.trim().startsWith('ptc_auth='));
+  return cookie ? cookie.trim().slice('ptc_auth='.length) : null;
+}
+
+function resolvePortalAuth(
   req: AuthenticatedRequest,
-  _res: Response,
+  res: Response,
   next: NextFunction
 ) {
-  try {
-    const authHeader = req.headers.authorization;
-    const token =
-      authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
-    if (!token) {
-      req.authUser = null;
-      return next();
-    }
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-      req.authUser = null;
-      req.authStatus = 503;
-      req.authError = 'Firebase Admin authentication is not configured on the server.';
-      return next();
-    }
-    const resolution = await resolveFirebaseUser(token);
-    req.authUser = resolution.user;
-    if (resolution.error) {
-      req.authStatus = 403;
-      req.authError = resolution.error;
-    }
-    return next();
-  } catch (error) {
-    console.error('Firebase token verification failed:', error);
-    req.authUser = null;
-    req.authStatus = 401;
-    req.authError =
-      'The portal could not verify this Firebase sign-in token. Check FIREBASE_SERVICE_ACCOUNT_JSON and ensure FIREBASE_PROJECT_ID matches the Firebase project used by the website.';
+  req.authUser = null;
+  const token = getAuthCookie(req);
+  if (!token) return next();
+
+  const secret = process.env.AUTH_JWT_SECRET;
+  if (!secret || Buffer.byteLength(secret, 'utf8') < 32) {
+    req.authStatus = 503;
+    req.authError = 'AUTH_JWT_SECRET must be configured with at least 32 characters.';
     return next();
   }
+
+  try {
+    req.authUser = verifyPhpAuthToken(token, secret);
+  } catch {
+    req.authStatus = 401;
+    req.authError = 'Your sign-in session is invalid or expired. Please sign in again.';
+  }
+  return next();
 }
 
 function mapRowToOrganizationProfile(
@@ -295,13 +275,18 @@ function isValidProposalPath(pathname: string, requiredPrefix: string): boolean 
 export async function createApiApp() {
   const app = express();
   app.use(express.json({ limit: '10mb' }));
-  app.use(resolveFirebaseAuth);
+  app.use(resolvePortalAuth);
   app.use('/api', (_req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Cache-Control', 'no-store');
     next();
   });
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {
-    if (req.path === '/health' || req.path === '/auth/me') {
+    if (
+      req.path === '/health' ||
+      req.path === '/auth/login' ||
+      req.path === '/auth/me' ||
+      req.path === '/auth/logout'
+    ) {
       return next();
     }
 
@@ -331,12 +316,121 @@ export async function createApiApp() {
     }
   });
 
-  // Auth: Resolve the Firebase account to an allow-listed portal role.
+  // Auth: Proxy credentials to PHP, then keep the signed session cookie on the portal origin.
+  app.post('/api/auth/login', async (req: Request, res: Response) => {
+    const origin = req.get('origin');
+    let originHost: string | null = null;
+    try {
+      originHost = origin ? new URL(origin).host : null;
+    } catch {
+      originHost = null;
+    }
+    if (!originHost || originHost !== req.get('host')) {
+      return res.status(403).json({ error: 'Sign-in requests must come from the portal site.' });
+    }
+
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+      email.length > 254 ||
+      password.length < 1 ||
+      password.length > 1024
+    ) {
+      return res.status(400).json({ error: 'Enter a valid email address and password.' });
+    }
+
+    const phpAuthUrl = process.env.PHP_AUTH_URL?.trim().replace(/\/+$/, '');
+    const secret = process.env.AUTH_JWT_SECRET;
+    if (!phpAuthUrl || !secret || Buffer.byteLength(secret, 'utf8') < 32) {
+      return res.status(503).json({
+        error: 'PHP_AUTH_URL and a matching AUTH_JWT_SECRET of at least 32 characters must be configured.',
+      });
+    }
+
+    let endpoint: URL;
+    try {
+      endpoint = new URL(`${phpAuthUrl}/login.php`);
+    } catch {
+      return res.status(503).json({ error: 'PHP_AUTH_URL is not a valid URL.' });
+    }
+    if (
+      (process.env.NODE_ENV === 'production' && endpoint.protocol !== 'https:') ||
+      !['http:', 'https:'].includes(endpoint.protocol)
+    ) {
+      return res.status(503).json({ error: 'The PHP authentication service must use HTTPS in production.' });
+    }
+
+    let phpResponse: Awaited<ReturnType<typeof fetch>>;
+    try {
+      phpResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email, password }),
+        signal: AbortSignal.timeout(10000),
+      });
+    } catch (error) {
+      console.error('PHP authentication service request failed:', error);
+      return res.status(503).json({ error: 'The PHP authentication service is unavailable.' });
+    }
+
+    const phpData: unknown = await phpResponse.json().catch(() => null);
+    if (!isRecord(phpData)) {
+      console.error('PHP authentication service returned an invalid response.');
+      return res.status(502).json({ error: 'The PHP authentication service returned an invalid response.' });
+    }
+    if (!phpResponse.ok) {
+      const status = [400, 401, 403].includes(phpResponse.status)
+        ? phpResponse.status
+        : 503;
+      const message =
+        typeof phpData.error === 'string'
+          ? phpData.error
+          : status === 401
+            ? 'Invalid email or password.'
+            : 'Unable to sign in.';
+      return res.status(status).json({ error: message });
+    }
+
+    if (typeof phpData.token !== 'string') {
+      console.error('PHP authentication service response did not contain a token.');
+      return res.status(502).json({ error: 'The PHP authentication service returned an invalid response.' });
+    }
+
+    let user: AuthUser;
+    try {
+      user = verifyPhpAuthToken(phpData.token, secret);
+    } catch (error) {
+      console.error('PHP authentication service returned an invalid token:', error);
+      return res.status(502).json({ error: 'The portal could not verify the PHP authentication response.' });
+    }
+
+    res.cookie('ptc_auth', phpData.token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 1000,
+    });
+    return res.json({ user });
+  });
+
+  // Auth: Verify the PHP-issued session cookie and expose its portal role.
   app.get('/api/auth/me', (req: AuthenticatedRequest, res) => {
     if (req.authError) {
       return res.status(req.authStatus ?? 503).json({ user: null, error: req.authError });
     }
     res.json({ user: req.authUser ?? null });
+  });
+
+  app.post('/api/auth/logout', (_req: Request, res: Response) => {
+    res.clearCookie('ptc_auth', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
+    res.status(204).end();
   });
 
   // Upload event image (accepts base64 data URL from FileReader)

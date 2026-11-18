@@ -1,12 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { onIdTokenChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { firebaseConfigured, getFirebaseAuth } from '../lib/firebase';
 import type { AuthUser } from '../types/portal';
 
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  token: string | null;
   login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   getAuthHeaders: () => Record<string, string>;
@@ -16,97 +13,87 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const getAuthHeaders = useCallback((): Record<string, string> => {
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }, [token]);
+  const getAuthHeaders = useCallback((): Record<string, string> => ({}), []);
 
   useEffect(() => {
-    if (!firebaseConfigured) {
-      setLoading(false);
-      return;
-    }
-
-    const auth = getFirebaseAuth();
     let active = true;
-    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) {
-        if (active) {
-          setUser(null);
-          setToken(null);
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        const nextToken = await firebaseUser.getIdToken();
-        const response = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${nextToken}` },
-        });
+    void fetch('/api/auth/me', { credentials: 'include' })
+      .then(async (response) => {
         const data = await response.json();
         if (!response.ok) {
-          throw new Error(data.error || 'Unable to verify your Firebase account with the portal.');
+          throw new Error(data.error || 'Unable to verify your portal session.');
         }
-        if (!data.user) {
-          await signOut(auth);
-          throw new Error('The portal did not assign a role to this Firebase account.');
-        }
-        if (active) {
-          setToken(nextToken);
-          setUser(data.user as AuthUser);
-        }
-      } catch (error) {
+        if (active) setUser(data.user as AuthUser | null);
+      })
+      .catch((error: unknown) => {
         if (active) {
           setUser(null);
-          setToken(null);
+          console.error('Portal session verification failed:', error);
         }
-        console.error('Firebase session verification failed:', error);
-      } finally {
+      })
+      .finally(() => {
         if (active) setLoading(false);
-      }
-    });
+      });
 
     return () => {
       active = false;
-      unsubscribe();
     };
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<AuthUser> => {
-    const auth = getFirebaseAuth();
-    const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
-    const nextToken = await credential.user.getIdToken(true);
-    const response = await fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${nextToken}` },
-    });
-    const data = await response.json();
-
-    if (!response.ok || !data.user) {
-      await signOut(auth);
-      throw new Error(
-        data.error || 'The portal did not assign a role to this Firebase account.'
-      );
+    let response: Response;
+    try {
+      response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+    } catch {
+      throw new Error('Cannot reach the portal authentication service.');
     }
 
-    const authenticatedUser = data.user as AuthUser;
-    setToken(nextToken);
+    const data: unknown = await response.json().catch(() => null);
+    if (
+      typeof data !== 'object' ||
+      data === null ||
+      !('user' in data)
+    ) {
+      throw new Error('The authentication service returned an invalid response.');
+    }
+    if (!response.ok) {
+      const error = 'error' in data && typeof data.error === 'string'
+        ? data.error
+        : 'Unable to sign in.';
+      throw new Error(error);
+    }
+
+    const authenticatedUser = data.user as AuthUser | null;
+    if (!authenticatedUser) {
+      throw new Error('The authentication service did not return an account.');
+    }
     setUser(authenticatedUser);
     return authenticatedUser;
   }, []);
 
   const logout = useCallback(async () => {
-    if (firebaseConfigured) {
-      await signOut(getFirebaseAuth());
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('The portal could not clear the sign-in cookie.');
+      }
+    } finally {
+      setUser(null);
     }
-    setUser(null);
-    setToken(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, token, login, logout, getAuthHeaders }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, getAuthHeaders }}>
       {children}
     </AuthContext.Provider>
   );

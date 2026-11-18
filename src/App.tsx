@@ -212,7 +212,7 @@ function PortalShell() {
         )}
       </div>
 
-      <SiteFooter organization={activeOrg} />
+      {route.page === 'about' && <SiteFooter organization={undefined} />}
 
       <LoginModal
         isOpen={loginOpen}

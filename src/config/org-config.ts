@@ -16,7 +16,6 @@ export interface OrganizationConfig {
   email: string;
   envUrlKey: string;
   envTokenKey: string;
-  uidEnvKey: string;
   accentColor: string;
   foundedYear: string;
   officeLocation: string;
@@ -38,7 +37,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'shane.pol@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_SSC',
     envTokenKey: 'TURSO_AUTH_TOKEN_SSC',
-    uidEnvKey: 'OFFICER_UID_SSC',
     accentColor: '#166534',
     foundedYear: '1993',
     officeLocation: 'Student Center, Room 201',
@@ -56,7 +54,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'nicole.francisco@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_PLUMAGE',
     envTokenKey: 'TURSO_AUTH_TOKEN_PLUMAGE',
-    uidEnvKey: 'OFFICER_UID_PLUMAGE',
     accentColor: '#7C2D12',
     foundedYear: '1996',
     officeLocation: 'Academic Wing, Press Room 104',
@@ -74,7 +71,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'gab@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_IMAGE',
     envTokenKey: 'TURSO_AUTH_TOKEN_IMAGE',
-    uidEnvKey: 'OFFICER_UID_IMAGE',
     accentColor: '#0F766E',
     foundedYear: '2008',
     officeLocation: 'IT Innovation Lab, 3rd Floor',
@@ -92,7 +88,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'leonard.bertulfo@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_ATHLETES',
     envTokenKey: 'TURSO_AUTH_TOKEN_ATHLETES',
-    uidEnvKey: 'OFFICER_UID_ATHLETES',
     accentColor: '#B45309',
     foundedYear: '2001',
     officeLocation: 'PTC Covered Court Annex',
@@ -110,7 +105,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'ethel.tangente@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_JPASAPS',
     envTokenKey: 'TURSO_AUTH_TOKEN_JPASAPS',
-    uidEnvKey: 'OFFICER_UID_JPASAPS',
     accentColor: '#4338CA',
     foundedYear: '2005',
     officeLocation: 'Office Administration Hall, Room 108',
@@ -128,7 +122,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'hersy.baluyos@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_JPCS',
     envTokenKey: 'TURSO_AUTH_TOKEN_JPCS',
-    uidEnvKey: 'OFFICER_UID_JPCS',
     accentColor: '#1D4ED8',
     foundedYear: '2004',
     officeLocation: 'Computing Studies Hub, Lab 2',
@@ -146,7 +139,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'mark.rabara@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_PMO',
     envTokenKey: 'TURSO_AUTH_TOKEN_PMO',
-    uidEnvKey: 'OFFICER_UID_PMO',
     accentColor: '#047857',
     foundedYear: '2011',
     officeLocation: 'Guidance & Counseling Center',
@@ -163,7 +155,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'andrea.armenta@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_SFHRE',
     envTokenKey: 'TURSO_AUTH_TOKEN_SFHRE',
-    uidEnvKey: 'OFFICER_UID_SFHRE',
     accentColor: '#9A3412',
     foundedYear: '2012',
     officeLocation: 'Business & Education Wing, Room 205',
@@ -180,7 +171,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'dars.corbes@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_GIFTED',
     envTokenKey: 'TURSO_AUTH_TOKEN_GIFTED',
-    uidEnvKey: 'OFFICER_UID_GIFTED',
     accentColor: '#6D28D9',
     foundedYear: '2014',
     officeLocation: 'College Library Commons',
@@ -197,7 +187,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'johncarlo.devera@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_UG',
     envTokenKey: 'TURSO_AUTH_TOKEN_UG',
-    uidEnvKey: 'OFFICER_UID_UG',
     accentColor: '#374151',
     foundedYear: '2007',
     officeLocation: 'Student Center, Room 102',
@@ -214,7 +203,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'princess.longcop@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_CHAMBERS',
     envTokenKey: 'TURSO_AUTH_TOKEN_CHAMBERS',
-    uidEnvKey: 'OFFICER_UID_CHAMBERS',
     accentColor: '#9F1239',
     foundedYear: '2002',
     officeLocation: 'Cultural Arts Studio, 2nd Floor',
@@ -232,7 +220,6 @@ export const ORGANIZATIONS: OrganizationConfig[] = [
     email: 'juztine.reyes@ptc.edu.ph',
     envUrlKey: 'TURSO_DATABASE_URL_DLC',
     envTokenKey: 'TURSO_AUTH_TOKEN_DLC',
-    uidEnvKey: 'OFFICER_UID_DLC',
     accentColor: '#1E40AF',
     foundedYear: '2015',
     officeLocation: 'Humanities Seminar Room 302',

@@ -17,6 +17,7 @@ export interface OrganizationProfile {
   organizationName: string;
   organizationShortName: string;
   presidentName: string;
+  facebookUrl: string | null;
 }
 
 export interface OrgPost {

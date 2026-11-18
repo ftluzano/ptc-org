@@ -156,6 +156,10 @@ function mapRowToOrganizationProfile(
       ? String(row.organization_short_name)
       : '',
     presidentName: row?.president_name ? String(row.president_name) : '',
+    facebookUrl:
+      row?.facebook_url === null || row?.facebook_url === undefined
+        ? null
+        : String(row.facebook_url),
   };
 }
 
@@ -471,7 +475,8 @@ export async function createApiApp() {
               profile.about_text,
               profile.organization_name,
               profile.organization_short_name,
-              profile.president_name
+              profile.president_name,
+              profile.facebook_url
             FROM (SELECT 1) AS singleton
             LEFT JOIN organization_profile AS profile ON profile.id = 1
           `);
@@ -486,6 +491,10 @@ export async function createApiApp() {
               : org.shortName,
             president: row?.president_name ? String(row.president_name) : org.president,
             aboutText: row?.about_text ? String(row.about_text) : '',
+            facebookUrl:
+              row?.facebook_url === null || row?.facebook_url === undefined
+                ? org.facebookUrl
+                : String(row.facebook_url),
             approvedCount: Number(row?.approved_count ?? 0),
             pendingCount: Number(row?.pending_count ?? 0),
             latestPostAt: row?.latest_post_at ? String(row.latest_post_at) : null,
@@ -568,7 +577,7 @@ export async function createApiApp() {
 
       const db = getOrgDb(org.code);
       const result = await db.execute(
-        'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
+        'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name, facebook_url FROM organization_profile WHERE id = 1'
       );
       const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
       return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -642,7 +651,48 @@ export async function createApiApp() {
           });
           await incrementPortalLiveVersion();
           const result = await db.execute(
-            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
+            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name, facebook_url FROM organization_profile WHERE id = 1'
+          );
+          const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
+          return res.json({ profile: mapRowToOrganizationProfile(row) });
+        }
+
+        if (asset === 'facebook') {
+          const facebookUrl: unknown = req.body?.facebookUrl;
+          if (typeof facebookUrl !== 'string' || facebookUrl.length > 500) {
+            return res.status(400).json({ error: 'Provide a Facebook page URL up to 500 characters.' });
+          }
+
+          const normalizedUrl = facebookUrl.trim();
+          if (normalizedUrl) {
+            try {
+              const parsedUrl = new URL(normalizedUrl);
+              if (
+                parsedUrl.protocol !== 'https:' ||
+                (parsedUrl.hostname !== 'facebook.com' &&
+                  !parsedUrl.hostname.endsWith('.facebook.com')) ||
+                parsedUrl.username ||
+                parsedUrl.password
+              ) {
+                throw new Error('Invalid Facebook page URL.');
+              }
+            } catch {
+              return res.status(400).json({ error: 'Enter a valid HTTPS Facebook page URL.' });
+            }
+          }
+
+          const db = getOrgDb(org.code);
+          await db.execute({
+            sql: `INSERT INTO organization_profile (id, facebook_url, updated_at)
+                  VALUES (1, ?, ?)
+                  ON CONFLICT(id) DO UPDATE SET
+                    facebook_url = excluded.facebook_url,
+                    updated_at = excluded.updated_at`,
+            args: [normalizedUrl, new Date().toISOString()],
+          });
+          await incrementPortalLiveVersion();
+          const result = await db.execute(
+            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name, facebook_url FROM organization_profile WHERE id = 1'
           );
           const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
           return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -692,7 +742,7 @@ export async function createApiApp() {
           });
           await incrementPortalLiveVersion();
           const profileResult = await db.execute(
-            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
+            'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name, facebook_url FROM organization_profile WHERE id = 1'
           );
           const row = profileResult.rows[0] as unknown as Record<string, unknown> | undefined;
           return res.json({ profile: mapRowToOrganizationProfile(row) });
@@ -738,7 +788,7 @@ export async function createApiApp() {
         });
         await incrementPortalLiveVersion();
         const result = await db.execute(
-          'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name FROM organization_profile WHERE id = 1'
+          'SELECT banner_data_url, avatar_data_url, about_text, organization_name, organization_short_name, president_name, facebook_url FROM organization_profile WHERE id = 1'
         );
         const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
         return res.json({ profile: mapRowToOrganizationProfile(row) });

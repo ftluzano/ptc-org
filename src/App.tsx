@@ -108,6 +108,7 @@ function PortalShell() {
                 fullName: updated.fullName,
                 president: updated.president,
                 aboutText: updated.aboutText,
+                facebookUrl: updated.facebookUrl,
               }
             : org;
         })
@@ -144,6 +145,7 @@ function PortalShell() {
                   profile.organizationShortName || baseOrg?.shortName || org.shortName,
                 president: profile.presidentName || baseOrg?.president || org.president,
                 aboutText: profile.aboutText,
+                facebookUrl: profile.facebookUrl ?? baseOrg?.facebookUrl,
               }
             : org
         )

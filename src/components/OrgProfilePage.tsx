@@ -75,6 +75,7 @@ export function OrgProfilePage({
     organizationName: '',
     organizationShortName: '',
     presidentName: '',
+    facebookUrl: null,
   });
   const [bannerDraft, setBannerDraft] = useState<string | null>(null);
   const [avatarDraft, setAvatarDraft] = useState<string | null>(null);
@@ -82,11 +83,13 @@ export function OrgProfilePage({
   const [organizationNameDraft, setOrganizationNameDraft] = useState('');
   const [organizationShortNameDraft, setOrganizationShortNameDraft] = useState('');
   const [presidentNameDraft, setPresidentNameDraft] = useState('');
+  const [facebookUrlDraft, setFacebookUrlDraft] = useState('');
   const [bannerChanged, setBannerChanged] = useState(false);
   const [avatarChanged, setAvatarChanged] = useState(false);
   const [aboutChanged, setAboutChanged] = useState(false);
   const [organizationNameChanged, setOrganizationNameChanged] = useState(false);
   const [presidentNameChanged, setPresidentNameChanged] = useState(false);
+  const [facebookUrlChanged, setFacebookUrlChanged] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Composer state
@@ -157,11 +160,13 @@ export function OrgProfilePage({
     setOrganizationNameDraft('');
     setOrganizationShortNameDraft('');
     setPresidentNameDraft('');
+    setFacebookUrlDraft('');
     setBannerChanged(false);
     setAvatarChanged(false);
     setAboutChanged(false);
     setOrganizationNameChanged(false);
     setPresidentNameChanged(false);
+    setFacebookUrlChanged(false);
     setPostImages([]);
     void loadOrganizationData();
   }, [loadOrganizationData]);
@@ -336,6 +341,25 @@ export function OrgProfilePage({
         setOrganizationShortNameDraft('');
         setPresidentNameChanged(false);
         setPresidentNameDraft('');
+      }
+
+      if (facebookUrlChanged) {
+        const response = await fetch(`/api/organizations/${org.code}/profile/facebook`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ facebookUrl: facebookUrlDraft.trim() }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save Facebook page URL.');
+        }
+        savedProfile = data.profile as OrganizationProfile;
+        setOrganizationProfile(savedProfile);
+        setFacebookUrlChanged(false);
+        setFacebookUrlDraft(savedProfile.facebookUrl ?? '');
       }
 
       setBannerDraft(null);
@@ -553,6 +577,8 @@ export function OrgProfilePage({
                   setOrganizationNameDraft(displayOrg.fullName);
                   setOrganizationShortNameDraft(displayOrg.shortName);
                   setPresidentNameDraft(displayOrg.president);
+                  setFacebookUrlDraft(organizationProfile.facebookUrl ?? org.facebookUrl ?? '');
+                  setFacebookUrlChanged(false);
                   setOrganizationNameChanged(false);
                   setPresidentNameChanged(false);
                   setActiveTab('profile');
@@ -777,6 +803,30 @@ export function OrgProfilePage({
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label htmlFor="organization-facebook-url" className="block text-xs font-medium text-stone-700">
+                  Facebook page URL
+                </label>
+                <input
+                  id="organization-facebook-url"
+                  type="url"
+                  maxLength={500}
+                  value={facebookUrlDraft}
+                  onChange={(event) => {
+                    setFacebookUrlDraft(event.target.value);
+                    setFacebookUrlChanged(
+                      event.target.value.trim() !==
+                        (organizationProfile.facebookUrl ?? org.facebookUrl ?? '')
+                    );
+                  }}
+                  placeholder="https://www.facebook.com/your-organization"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
+                />
+                <p className="text-xs text-stone-500">
+                  This link appears in the portal’s Follow Us section. Leave it empty to hide it.
+                </p>
+              </div>
+
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="block text-xs font-medium text-stone-700">Banner image</label>
@@ -859,11 +909,13 @@ export function OrgProfilePage({
                     setOrganizationNameDraft('');
                     setOrganizationShortNameDraft('');
                     setPresidentNameDraft('');
+                    setFacebookUrlDraft('');
                     setBannerChanged(false);
                     setAvatarChanged(false);
                     setAboutChanged(false);
                     setOrganizationNameChanged(false);
                     setPresidentNameChanged(false);
+                    setFacebookUrlChanged(false);
                     setActiveTab('feed');
                   }}
                   className="cursor-pointer rounded-lg px-4 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-100"
@@ -878,7 +930,8 @@ export function OrgProfilePage({
                       !avatarChanged &&
                       !aboutChanged &&
                       !organizationNameChanged &&
-                      !presidentNameChanged)
+                      !presidentNameChanged &&
+                      !facebookUrlChanged)
                   }
                   className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#166534] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#14532d] disabled:cursor-not-allowed disabled:opacity-50"
                 >

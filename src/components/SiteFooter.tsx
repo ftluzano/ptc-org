@@ -75,7 +75,7 @@ export function SiteFooter({ organization }: SiteFooterProps) {
           ) : null}
           {!organization && (
             <p className="mt-3 text-xs text-white/70">
-              Facebook links for other organizations will be added when available.
+              Organization officers can update their Facebook page link from their profile page.
             </p>
           )}
         </section>

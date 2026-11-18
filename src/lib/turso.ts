@@ -195,6 +195,7 @@ async function initializeDatabases() {
             organization_name TEXT,
             organization_short_name TEXT,
             president_name TEXT,
+            facebook_url TEXT,
             updated_at TEXT NOT NULL
           )
         `);
@@ -205,6 +206,7 @@ async function initializeDatabases() {
           'organization_name',
           'organization_short_name',
           'president_name',
+          'facebook_url',
         ]) {
           if (!existingColumns.has(column)) {
             await db.execute(`ALTER TABLE organization_profile ADD COLUMN ${column} TEXT`);

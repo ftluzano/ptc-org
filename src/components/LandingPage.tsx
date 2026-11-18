@@ -82,6 +82,15 @@ const boardOfTrustees: Array<{
   { name: 'Dr. Julieta Paras', role: 'CHED Resource Person', image: trusteeJulietaParasImage, cropScale: 135 },
 ];
 
+const boardOfTrusteeRows = [
+  boardOfTrustees.slice(0, 1),
+  boardOfTrustees.slice(1, 2),
+  boardOfTrustees.slice(2, 4),
+  boardOfTrustees.slice(4, 7),
+  boardOfTrustees.slice(7, 10),
+  boardOfTrustees.slice(10, 12),
+];
+
 function HymnVideo({ videoId, title }: { videoId: string; title: string }) {
   const playerContainerRef = React.useRef<HTMLDivElement>(null);
   const playerFrameRef = React.useRef<HTMLIFrameElement>(null);
@@ -275,55 +284,6 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             </div>
           </article>
         </section>
-        <section aria-labelledby="ptc-board-of-trustees-heading" className="space-y-4">
-          <h2
-            id="ptc-board-of-trustees-heading"
-            className="text-center font-display text-2xl font-semibold text-white sm:text-3xl"
-          >
-            BOARD OF TRUSTEES
-          </h2>
-          <div className="portal-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-            {boardOfTrustees.map((trustee) => (
-              <article
-                key={trustee.name}
-                className="portal-interactive-card flex flex-col items-center rounded-2xl border border-white/15 bg-white/[0.06] p-4 text-center shadow-sm backdrop-blur-sm"
-              >
-                <div className="relative mb-3 h-28 w-28 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/[0.06] shadow-md">
-                  {trustee.image ? (
-                    <img
-                      src={trustee.image}
-                      alt={`Portrait of ${trustee.name}`}
-                      className={
-                        trustee.cropScale !== undefined
-                          ? 'absolute left-1/2 top-[-5px] max-w-none -translate-x-1/2'
-                          : 'absolute inset-0 h-full w-full object-cover object-top'
-                      }
-                      style={
-                        trustee.cropScale !== undefined
-                          ? { width: `${trustee.cropScale}%` }
-                          : undefined
-                      }
-                      loading="lazy"
-                    />
-                  ) : (
-                    <span
-                      aria-hidden="true"
-                      className="flex h-full w-full items-center justify-center font-display text-3xl font-semibold text-white/80"
-                    >
-                      EP
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-sm font-semibold leading-snug text-white sm:text-base">
-                  {trustee.name}
-                </h3>
-                <p className="mt-1 text-xs leading-relaxed text-white/75 sm:text-sm">
-                  {trustee.role}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
         <section aria-labelledby="ptc-former-administrators-heading" className="space-y-4">
           <h2
             id="ptc-former-administrators-heading"
@@ -492,6 +452,62 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             </figure>
           ))}
         </div>
+        <section aria-labelledby="ptc-board-of-trustees-heading" className="space-y-5">
+          <h2
+            id="ptc-board-of-trustees-heading"
+            className="text-center font-display text-2xl font-semibold text-white sm:text-3xl"
+          >
+            Board of Trustees
+          </h2>
+          {boardOfTrusteeRows.map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="portal-stagger flex flex-wrap justify-center gap-3 sm:gap-4"
+            >
+              {row.map((trustee) => (
+                <div
+                  key={trustee.name}
+                  className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]"
+                >
+                  <article className="portal-interactive-card flex h-full flex-col items-center rounded-2xl border border-white/15 bg-white/[0.06] p-4 text-center shadow-sm backdrop-blur-sm">
+                    <div className="relative mb-3 h-28 w-28 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/[0.06] shadow-md">
+                      {trustee.image ? (
+                        <img
+                          src={trustee.image}
+                          alt={`Portrait of ${trustee.name}`}
+                          className={
+                            trustee.cropScale !== undefined
+                              ? 'absolute left-1/2 top-[-5px] max-w-none -translate-x-1/2'
+                              : 'absolute inset-0 h-full w-full object-cover object-top'
+                          }
+                          style={
+                            trustee.cropScale !== undefined
+                              ? { width: `${trustee.cropScale}%` }
+                              : undefined
+                          }
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span
+                          aria-hidden="true"
+                          className="flex h-full w-full items-center justify-center font-display text-3xl font-semibold text-white/80"
+                        >
+                          EP
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-sm font-semibold leading-snug text-white sm:text-base">
+                      {trustee.name}
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-white/75 sm:text-sm">
+                      {trustee.role}
+                    </p>
+                  </article>
+                </div>
+              ))}
+            </div>
+          ))}
+        </section>
       </section>
       )}
     </main>

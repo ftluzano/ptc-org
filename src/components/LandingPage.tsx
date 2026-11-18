@@ -13,6 +13,14 @@ import missionImage from '../assets/images/ptc-mission.png';
 import studentLifeImage from '../assets/images/ptc-student-life.png';
 import visionImage from '../assets/images/ptc-vision.png';
 import { Volume2, VolumeX } from 'lucide-react';
+import trusteeGeraldGermanImage from '../assets/images/trustee-gerald-german.png';
+import trusteeYhonVenturaImage from '../assets/images/trustee-yhon-ventura.png';
+import trusteeRobertSantosImage from '../assets/images/trustee-robert-santos.png';
+import trusteeLuigiBacantoImage from '../assets/images/trustee-luigi-bacanto.png';
+import trusteeCatherinePenaverdeImage from '../assets/images/trustee-catherine-penaverde.png';
+import trusteeRolandoBaylonImage from '../assets/images/trustee-rolando-baylon.png';
+import trusteeRaymundoArcegaImage from '../assets/images/trustee-raymundo-arcega.png';
+import trusteeJulietaParasImage from '../assets/images/trustee-julieta-paras.png';
 
 const landingImages = [
   { src: visionImage, alt: 'Pateros Technological College vision statement', trimEdge: true },
@@ -52,6 +60,26 @@ const formerAdministrators = [
     src: godofredoMarceloImage,
     alt: 'Mr. Godofredo R. Marcelo, Administrator, 1995–2005',
   },
+];
+
+const boardOfTrustees: Array<{
+  name: string;
+  role: string;
+  image?: string;
+  cropScale?: number;
+}> = [
+  { name: 'Hon. Mayor Gerald German', role: 'Chairman of the Board', image: trusteeGeraldGermanImage, cropScale: 170 },
+  { name: 'Dr. Analiza F. Arcega', role: 'College President', image: currentPresidentImage },
+  { name: 'Ms. Angelus D.P. Ponce', role: 'Representative – Head (MPDO)', image: angelusPonceImage },
+  { name: 'Mr. Yhon Miguel Ventura', role: 'SB Committee Chairman on Education', image: trusteeYhonVenturaImage, cropScale: 157 },
+  { name: 'Mr. Robert Santos', role: 'Representative – Business Sector', image: trusteeRobertSantosImage, cropScale: 171 },
+  { name: 'Mr. Luigi Bacanto', role: 'PTC Alumni', image: trusteeLuigiBacantoImage, cropScale: 133 },
+  { name: 'Ms. Catherine Peñaverde', role: 'Faculty President', image: trusteeCatherinePenaverdeImage, cropScale: 161 },
+  { name: 'Mr. Rolando S. Baylon', role: 'BOT – Secretary', image: trusteeRolandoBaylonImage, cropScale: 159 },
+  { name: 'Mr. Elmer Perote', role: 'SSC President' },
+  { name: 'Ms. Daisy Villanueva', role: 'NGO Representative Member', image: daisyVillanuevaImage },
+  { name: 'Dr. Raymundo Arcega', role: 'ALCUCOA President', image: trusteeRaymundoArcegaImage, cropScale: 148 },
+  { name: 'Dr. Julieta Paras', role: 'CHED Resource Person', image: trusteeJulietaParasImage, cropScale: 135 },
 ];
 
 function HymnVideo({ videoId, title }: { videoId: string; title: string }) {
@@ -247,6 +275,55 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             </div>
           </article>
         </section>
+        <section aria-labelledby="ptc-board-of-trustees-heading" className="space-y-4">
+          <h2
+            id="ptc-board-of-trustees-heading"
+            className="text-center font-display text-2xl font-semibold text-white sm:text-3xl"
+          >
+            BOARD OF TRUSTEES
+          </h2>
+          <div className="portal-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+            {boardOfTrustees.map((trustee) => (
+              <article
+                key={trustee.name}
+                className="portal-interactive-card flex flex-col items-center rounded-2xl border border-white/15 bg-white/[0.06] p-4 text-center shadow-sm backdrop-blur-sm"
+              >
+                <div className="relative mb-3 h-28 w-28 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/[0.06] shadow-md">
+                  {trustee.image ? (
+                    <img
+                      src={trustee.image}
+                      alt={`Portrait of ${trustee.name}`}
+                      className={
+                        trustee.cropScale !== undefined
+                          ? 'absolute left-1/2 top-[-5px] max-w-none -translate-x-1/2'
+                          : 'absolute inset-0 h-full w-full object-cover object-top'
+                      }
+                      style={
+                        trustee.cropScale !== undefined
+                          ? { width: `${trustee.cropScale}%` }
+                          : undefined
+                      }
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="flex h-full w-full items-center justify-center font-display text-3xl font-semibold text-white/80"
+                    >
+                      EP
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-sm font-semibold leading-snug text-white sm:text-base">
+                  {trustee.name}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-white/75 sm:text-sm">
+                  {trustee.role}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
         <section aria-labelledby="ptc-former-administrators-heading" className="space-y-4">
           <h2
             id="ptc-former-administrators-heading"
@@ -290,13 +367,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             <li>Environment Concern</li>
           </ul>
         </section>
-        <section aria-labelledby="ptc-hymns-heading" className="space-y-4">
-          <h2
-            id="ptc-hymns-heading"
-            className="text-center font-display text-2xl font-semibold text-white sm:text-3xl"
-          >
-            PTC HYMNS
-          </h2>
+        <section aria-label="PTC hymns" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <article
               aria-labelledby="himno-ng-pateros-heading"

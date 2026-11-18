@@ -56,18 +56,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const data: unknown = await response.json().catch(() => null);
-    if (
-      typeof data !== 'object' ||
-      data === null ||
-      !('user' in data)
-    ) {
-      throw new Error('The authentication service returned an invalid response.');
-    }
     if (!response.ok) {
-      const error = 'error' in data && typeof data.error === 'string'
+      const error =
+        typeof data === 'object' &&
+        data !== null &&
+        'error' in data &&
+        typeof data.error === 'string'
         ? data.error
-        : 'Unable to sign in.';
+        : `Unable to sign in (HTTP ${response.status}).`;
       throw new Error(error);
+    }
+
+    if (typeof data !== 'object' || data === null || !('user' in data)) {
+      throw new Error('The authentication service returned an invalid response.');
     }
 
     const authenticatedUser = data.user as AuthUser | null;

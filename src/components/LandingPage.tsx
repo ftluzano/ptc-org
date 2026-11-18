@@ -12,6 +12,7 @@ import campusLifeImage from '../assets/images/ptc-campus-life.png';
 import missionImage from '../assets/images/ptc-mission.png';
 import studentLifeImage from '../assets/images/ptc-student-life.png';
 import visionImage from '../assets/images/ptc-vision.png';
+import { Volume2, VolumeX } from 'lucide-react';
 
 const landingImages = [
   { src: visionImage, alt: 'Pateros Technological College vision statement', trimEdge: true },
@@ -52,6 +53,97 @@ const formerAdministrators = [
     alt: 'Mr. Godofredo R. Marcelo, Administrator, 1995–2005',
   },
 ];
+
+function HymnVideo({ videoId, title }: { videoId: string; title: string }) {
+  const playerContainerRef = React.useRef<HTMLDivElement>(null);
+  const playerFrameRef = React.useRef<HTMLIFrameElement>(null);
+  const [isVisible, setIsVisible] = React.useState(false);
+  const [isMuted, setIsMuted] = React.useState(true);
+
+  React.useEffect(() => {
+    const container = playerContainerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.25 }
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  React.useEffect(() => {
+    if (!isVisible) setIsMuted(true);
+  }, [isVisible]);
+
+  function sendPlayerCommand(command: 'mute' | 'unMute' | 'playVideo') {
+    playerFrameRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func: command, args: [] }),
+      'https://www.youtube-nocookie.com'
+    );
+  }
+
+  function handleMuteToggle() {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    sendPlayerCommand(nextMuted ? 'mute' : 'unMute');
+    if (!nextMuted) sendPlayerCommand('playVideo');
+  }
+
+  const videoUrl = new URL(`https://www.youtube-nocookie.com/embed/${videoId}`);
+  videoUrl.search = new URLSearchParams({
+    autoplay: '1',
+    mute: '1',
+    enablejsapi: '1',
+    playsinline: '1',
+    rel: '0',
+    origin: window.location.origin,
+  }).toString();
+
+  return (
+    <div
+      ref={playerContainerRef}
+      className="mt-5 overflow-hidden rounded-xl border border-white/15 bg-black/20"
+    >
+      {isVisible ? (
+        <iframe
+          ref={playerFrameRef}
+          src={videoUrl.toString()}
+          title={`${title} video`}
+          allow="autoplay; encrypted-media; picture-in-picture; web-share"
+          allowFullScreen
+          onLoad={() => {
+            sendPlayerCommand('mute');
+            sendPlayerCommand('playVideo');
+          }}
+          className="aspect-video w-full"
+        />
+      ) : (
+        <div
+          aria-label={`${title} video will play when visible`}
+          className="flex aspect-video items-center justify-center bg-white/[0.03] text-sm text-white/60"
+        >
+          Video plays when you scroll here
+        </div>
+      )}
+      <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+        <span className="text-xs text-white/70">
+          {isVisible ? 'Playing muted' : 'Autoplays when in view'}
+        </span>
+        <button
+          type="button"
+          onClick={handleMuteToggle}
+          disabled={!isVisible}
+          aria-label={isMuted ? `Unmute ${title}` : `Mute ${title}`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          {isMuted ? 'Unmute' : 'Mute'}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface LandingPageProps {
   showAbout?: boolean;
@@ -119,7 +211,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             About PTC
           </h1>
         </div>
-        <div className="portal-interactive-card space-y-5 rounded-2xl border border-stone-200 bg-white p-5 text-base leading-8 text-stone-700 shadow-sm sm:p-7">
+        <div className="portal-interactive-card space-y-5 rounded-2xl border border-white/15 bg-white/[0.06] p-5 text-base leading-8 text-white/90 shadow-sm backdrop-blur-sm sm:p-7">
           {ptcHistory.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
@@ -136,8 +228,8 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
               THE PRESIDENT
             </h2>
           </div>
-          <article className="portal-interactive-card group mx-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-md sm:p-6">
-            <figure className="flex w-full max-w-[320px] items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-2 shadow-md">
+          <article className="portal-interactive-card group mx-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/15 bg-white/[0.06] p-5 text-center shadow-md backdrop-blur-sm sm:p-6">
+            <figure className="flex w-full max-w-[320px] items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-white/[0.04] p-2 shadow-md">
               <img
                 src={currentPresidentImage}
                 alt="Dr. Analiza F. Arcega"
@@ -146,10 +238,10 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
               />
             </figure>
             <div>
-              <h3 className="font-display text-2xl font-semibold text-stone-900">
+              <h3 className="font-display text-2xl font-semibold text-white">
                 Dr. Analiza F. Arcega
               </h3>
-              <p className="mt-2 text-base leading-relaxed text-stone-600">
+              <p className="mt-2 text-base leading-relaxed text-white/75">
                 LPT, RGC, CSASS
               </p>
             </div>
@@ -166,7 +258,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             {formerAdministrators.map((administrator) => (
               <figure
                 key={administrator.src}
-                className="portal-interactive-card group aspect-[0.64] overflow-hidden rounded-xl border border-stone-200 bg-[#eeedff] shadow-sm"
+                className="portal-interactive-card group aspect-[0.64] overflow-hidden rounded-xl border border-white/15 bg-white/[0.06] shadow-sm"
               >
                 <img
                   src={administrator.src}
@@ -180,7 +272,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
         </section>
         <section
           aria-labelledby="ptc-core-values-heading"
-          className="portal-interactive-card rounded-2xl border border-transparent bg-[#166534] px-5 py-7 text-white shadow-sm sm:px-8 sm:py-9"
+          className="portal-interactive-card rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-7 text-white shadow-sm backdrop-blur-sm sm:px-8 sm:py-9"
         >
           <h2
             id="ptc-core-values-heading"
@@ -198,11 +290,127 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             <li>Environment Concern</li>
           </ul>
         </section>
+        <section aria-labelledby="ptc-hymns-heading" className="space-y-4">
+          <h2
+            id="ptc-hymns-heading"
+            className="text-center font-display text-2xl font-semibold text-white sm:text-3xl"
+          >
+            PTC HYMNS
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            <article
+              aria-labelledby="himno-ng-pateros-heading"
+              className="portal-interactive-card rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-6 text-center text-white/90 shadow-sm backdrop-blur-sm sm:px-7"
+            >
+              <h3
+                id="himno-ng-pateros-heading"
+                className="font-display text-xl font-semibold text-white sm:text-2xl"
+              >
+                Himno ng Pateros
+              </h3>
+              <HymnVideo videoId="043Qg3HSpZU" title="Himno ng Pateros" />
+              <div className="mt-5 space-y-5 text-sm leading-7 sm:text-base">
+                <p>
+                  Bayan ng Pateros, ayon sa kasaysayan
+                  <br />
+                  Lahing magiting, kanyang pinagmulan
+                  <br />
+                  May sakahang lupa, may ilog na daluyan
+                  <br />
+                  Kinagisnang gawain ay pag-iitikan
+                </p>
+                <p>
+                  <span className="font-semibold text-white">KORO</span>
+                  <br />
+                  Pateros, Pateros maunlad ang Bayan ko
+                  <br />
+                  Sa ekonomiya at yamang pantao
+                  <br />
+                  Nakikiisa ako sa mithi at prinsipyo
+                  <br />
+                  Pateros, Pateros isusulong
+                </p>
+                <p>
+                  Aking lakas, sipag, talino at tiyaga
+                  <br />
+                  Puhunan ng lahat para sa paggawa
+                  <br />
+                  May dangal na taglay sa puso’t diwa
+                  <br />
+                  Mamamayan niya’y huwaran ng madla
+                </p>
+                <p>
+                  <span className="font-semibold text-white">KORO 2X</span>
+                  <br />
+                  Pateros, Pateros maunlad ang Bayan ko
+                  <br />
+                  Sa ekonomiya at yamang pantao
+                  <br />
+                  Nakikiisa ako sa mithi at prinsipyo
+                  <br />
+                  Pateros, Pateros isusulong
+                  <br />
+                  Pateros, Pateros isusulong tagumpay mo
+                </p>
+              </div>
+            </article>
+            <article
+              aria-labelledby="ptc-hymn-heading"
+              className="portal-interactive-card rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-6 text-center text-white/90 shadow-sm backdrop-blur-sm sm:px-7"
+            >
+              <h3
+                id="ptc-hymn-heading"
+                className="font-display text-xl font-semibold text-white sm:text-2xl"
+              >
+                PTC Hymn
+              </h3>
+              <HymnVideo videoId="cUjVz5y5w4k" title="PTC Hymn" />
+              <div className="mt-5 space-y-5 text-sm leading-7 sm:text-base">
+                <p>
+                  <span className="font-semibold text-white">I</span>
+                  <br />
+                  Paaralan naming mahal
+                  <br />
+                  Ikaw ang aming patnubay
+                  <br />
+                  Tungo sa kinabukasan
+                  <br />
+                  Taglay ang karunungan
+                </p>
+                <p>
+                  <span className="font-semibold text-white">(KORO)</span>
+                  <br />
+                  PTC ikaw ang ilaw
+                  <br />
+                  Salamat sa iyong aral
+                  <br />
+                  Pagmamahal sa iyo ay taglay
+                  <br />
+                  Sa alaala lagi ay buhay
+                </p>
+                <p>
+                  <span className="font-semibold text-white">II</span>
+                  <br />
+                  PTC ikaw ang gabay
+                  <br />
+                  Simbolo ka ng tagumpay
+                  <br />
+                  Kabataan ito ang alay
+                  <br />
+                  Ligaya’y magulang ang kaakbay
+                </p>
+                <p>
+                  <span className="font-semibold text-white">(Ulitin ang KORO)</span>
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
         <div className="portal-stagger grid gap-4 sm:grid-cols-2 sm:gap-5">
           {landingImages.map((image) => (
             <figure
               key={image.src}
-              className="portal-interactive-card group aspect-[1.4] overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm"
+              className="portal-interactive-card group aspect-[1.4] overflow-hidden rounded-2xl border border-white/15 bg-white/[0.06] shadow-sm"
             >
               <img
                 src={image.src}

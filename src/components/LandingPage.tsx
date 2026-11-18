@@ -210,6 +210,7 @@ function AboutUsVideo() {
       <video
         ref={videoRef}
         src={aboutUsVideo}
+        autoPlay
         controls
         muted
         playsInline

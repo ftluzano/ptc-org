@@ -140,7 +140,7 @@ function HymnVideo({ videoId, title }: { videoId: string; title: string }) {
   return (
     <div
       ref={playerContainerRef}
-      className="mt-5 overflow-hidden rounded-xl border border-white/15 bg-black/20"
+      className="mt-5 overflow-hidden rounded-xl"
     >
       {isVisible ? (
         <iframe
@@ -158,7 +158,7 @@ function HymnVideo({ videoId, title }: { videoId: string; title: string }) {
       ) : (
         <div
           aria-label={`${title} video will play when visible`}
-          className="flex aspect-video items-center justify-center bg-white/[0.03] text-sm text-white/60"
+          className="flex aspect-video items-center justify-center text-sm text-white/60"
         >
           Video plays when you scroll here
         </div>
@@ -248,7 +248,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             About PTC
           </h1>
         </div>
-        <div className="portal-interactive-card space-y-5 rounded-2xl border border-white/15 bg-white/[0.06] p-5 text-base leading-8 text-white/90 shadow-sm backdrop-blur-sm sm:p-7">
+        <div className="mx-auto max-w-5xl space-y-5 px-3 text-base leading-8 text-white/90 sm:px-7">
           {ptcHistory.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
@@ -265,8 +265,8 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
               THE PRESIDENT
             </h2>
           </div>
-          <article className="portal-interactive-card group mx-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/15 bg-white/[0.06] p-5 text-center shadow-md backdrop-blur-sm sm:p-6">
-            <figure className="flex w-full max-w-[320px] items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-white/[0.04] p-2 shadow-md">
+          <article className="mx-auto flex w-full max-w-md flex-col items-center gap-5 p-4 text-center sm:p-6">
+            <figure className="flex w-full max-w-[320px] items-center justify-center overflow-hidden rounded-2xl">
               <img
                 src={currentPresidentImage}
                 alt="Dr. Analiza F. Arcega"
@@ -295,7 +295,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             {formerAdministrators.map((administrator) => (
               <figure
                 key={administrator.src}
-                className="portal-interactive-card group aspect-[0.64] overflow-hidden rounded-xl border border-white/15 bg-white/[0.06] shadow-sm"
+                className="group aspect-[0.64] overflow-hidden rounded-xl"
               >
                 <img
                   src={administrator.src}
@@ -309,7 +309,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
         </section>
         <section
           aria-labelledby="ptc-core-values-heading"
-          className="portal-interactive-card rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-7 text-white shadow-sm backdrop-blur-sm sm:px-8 sm:py-9"
+          className="py-4 text-white"
         >
           <h2
             id="ptc-core-values-heading"
@@ -331,7 +331,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
           <div className="grid gap-4 md:grid-cols-2">
             <article
               aria-labelledby="himno-ng-pateros-heading"
-              className="portal-interactive-card rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-6 text-center text-white/90 shadow-sm backdrop-blur-sm sm:px-7"
+              className="px-3 py-4 text-center text-white/90 sm:px-5"
             >
               <h3
                 id="himno-ng-pateros-heading"
@@ -387,7 +387,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
             </article>
             <article
               aria-labelledby="ptc-hymn-heading"
-              className="portal-interactive-card rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-6 text-center text-white/90 shadow-sm backdrop-blur-sm sm:px-7"
+              className="px-3 py-4 text-center text-white/90 sm:px-5"
             >
               <h3
                 id="ptc-hymn-heading"
@@ -441,7 +441,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
           {landingImages.map((image) => (
             <figure
               key={image.src}
-              className="portal-interactive-card group aspect-[1.4] overflow-hidden rounded-2xl border border-white/15 bg-white/[0.06] shadow-sm"
+              className="group aspect-[1.4] overflow-hidden rounded-2xl"
             >
               <img
                 src={image.src}
@@ -469,8 +469,8 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
                   key={trustee.name}
                   className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]"
                 >
-                  <article className="portal-interactive-card flex h-full flex-col items-center rounded-2xl border border-white/15 bg-white/[0.06] p-4 text-center shadow-sm backdrop-blur-sm">
-                    <div className="relative mb-3 h-28 w-28 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/[0.06] shadow-md">
+                  <article className="flex h-full flex-col items-center p-4 text-center">
+                    <div className="relative mb-3 h-28 w-28 shrink-0 overflow-hidden rounded-full border border-white/20">
                       {trustee.image ? (
                         <img
                           src={trustee.image}

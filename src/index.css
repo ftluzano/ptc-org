@@ -6,9 +6,8 @@
   --brand-50: #f0fdf4;
   --accent-yellow: #facc15;
   --page-background:
-    radial-gradient(ellipse at 8% 0%, rgba(250, 204, 21, 0.18), transparent 38%),
-    radial-gradient(ellipse at 92% 18%, rgba(22, 101, 52, 0.14), transparent 36%),
-    linear-gradient(135deg, #f3f8e8 0%, #fffbea 52%, #e9f4e6 100%);
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 4px),
+    linear-gradient(135deg, #0b302e 0%, #103a35 52%, #123d37 100%);
   --surface-strong: #ffffff;
   --surface-soft: #f8fafc;
   --surface-muted: #f1f5f9;

@@ -36,7 +36,7 @@ export function OrgDirectoryPage({
       <section id="org-directory" className="scroll-mt-20 space-y-4 sm:scroll-mt-24 sm:space-y-5">
         <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <h2 className="font-display text-2xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-white sm:text-4xl">
               Explore Student Organizations
             </h2>
           </div>

@@ -301,10 +301,10 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
       <main className="portal-page-enter mx-auto max-w-7xl space-y-4 px-3 py-4 sm:px-6 sm:py-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <div className="text-xs font-medium uppercase tracking-widest text-stone-500">
+            <div className="text-xs font-medium uppercase tracking-widest text-emerald-100">
               CESSCA Super Administrator
             </div>
-            <h1 className="mt-1 font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
+            <h1 className="mt-1 font-display text-2xl font-semibold text-white sm:text-3xl">
               Proposal File Submissions
             </h1>
           </div>
@@ -406,10 +406,10 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
     <main className="portal-page-enter mx-auto max-w-7xl space-y-3 px-3 py-4 sm:space-y-4 sm:px-6 sm:py-6">
       <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-end sm:gap-3">
         <div>
-          <div className="text-xs uppercase tracking-widest text-stone-500 font-medium">
+          <div className="text-xs uppercase tracking-widest text-emerald-100 font-medium">
             Super Administrator Console
           </div>
-          <h1 className="mt-1 font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
+          <h1 className="mt-1 font-display text-2xl font-semibold text-white sm:text-3xl">
             Legacy Announcement Queue
           </h1>
         </div>

@@ -64,7 +64,7 @@ export function GlobalFeedPage({
         <button
           type="button"
           onClick={onBackToDirectory}
-          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#166534] cursor-pointer"
+          className="inline-flex items-center gap-2 text-sm font-medium text-white transition-colors hover:text-emerald-200 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Organizations Directory</span>

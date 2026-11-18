@@ -491,13 +491,13 @@ export function OrgProfilePage({
         <button
           type="button"
           onClick={onBackToDirectory}
-          className="inline-flex items-center gap-2 text-sm font-medium text-stone-700 transition-colors hover:text-[#166534] cursor-pointer"
+          className="inline-flex items-center gap-2 text-sm font-medium text-white transition-colors hover:text-emerald-200 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back</span>
         </button>
 
-        <span className="hidden font-mono text-xs text-stone-500 sm:block">/org/{org.code}</span>
+        <span className="hidden font-mono text-xs text-emerald-100 sm:block">/org/{org.code}</span>
       </div>
 
       <section className="overflow-hidden rounded-[20px] border border-stone-200 bg-white shadow-[0_22px_40px_rgba(15,23,42,0.08)] sm:rounded-[26px]">

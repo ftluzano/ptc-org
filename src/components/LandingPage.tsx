@@ -115,7 +115,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
           </div>
         )}
         <div>
-          <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
+          <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             About PTC
           </h1>
         </div>
@@ -126,12 +126,12 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
         </div>
         <section aria-labelledby="ptc-president-heading" className="space-y-4">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-100">
               2017–Present
             </p>
             <h2
               id="ptc-president-heading"
-              className="mt-1 font-display text-2xl font-semibold text-stone-900 sm:text-3xl"
+              className="mt-1 font-display text-2xl font-semibold text-white sm:text-3xl"
             >
               THE PRESIDENT
             </h2>
@@ -158,7 +158,7 @@ export function LandingPage({ showAbout = false, scrollToAbout = false }: Landin
         <section aria-labelledby="ptc-former-administrators-heading" className="space-y-4">
           <h2
             id="ptc-former-administrators-heading"
-            className="text-center font-display text-2xl font-semibold text-stone-900 sm:text-3xl"
+            className="text-center font-display text-2xl font-semibold text-white sm:text-3xl"
           >
             FORMER ADMINISTRATORS
           </h2>

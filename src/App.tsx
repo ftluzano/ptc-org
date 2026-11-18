@@ -162,7 +162,7 @@ function PortalShell() {
   const activeOrg = route.page === 'org' ? getOrgByCode(route.orgCode) : undefined;
 
   return (
-    <div className="portal-shell min-h-screen flex flex-col text-stone-900">
+    <div className="portal-shell min-h-screen flex flex-col text-white">
       <TopBar
         route={route}
         onNavigate={navigate}

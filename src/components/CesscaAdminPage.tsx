@@ -9,6 +9,7 @@ import {
   Trash2,
   FileDown,
   FileText,
+  Eye,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
@@ -39,6 +40,20 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+const PREVIEWABLE_PROPOSAL_CONTENT_TYPES = new Set([
+  'application/pdf',
+  'image/gif',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
+
+function isPreviewableProposal(proposal: ProposalSubmission): boolean {
+  return PREVIEWABLE_PROPOSAL_CONTENT_TYPES.has(
+    proposal.contentType.split(';', 1)[0].trim().toLowerCase()
+  );
+}
+
 export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: CesscaAdminPageProps) {
   const { user, getAuthHeaders } = useAuth();
   const [items, setItems] = useState<SubmissionQueueItem[]>([]);
@@ -56,6 +71,17 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
   const [proposalsLoading, setProposalsLoading] = useState(true);
   const [proposalError, setProposalError] = useState<string | null>(null);
   const [proposalActionId, setProposalActionId] = useState<string | null>(null);
+  const [proposalAction, setProposalAction] = useState<'download' | 'preview' | 'delete' | null>(null);
+  const [proposalPreview, setProposalPreview] = useState<{
+    url: string;
+    fileName: string;
+    contentType: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!proposalPreview) return;
+    return () => URL.revokeObjectURL(proposalPreview.url);
+  }, [proposalPreview]);
 
   const loadQueue = useCallback(async () => {
     if (user?.role !== 'cessca') {
@@ -219,19 +245,25 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
     }
   }
 
+  async function fetchProposalFile(proposal: ProposalSubmission): Promise<Blob> {
+    const response = await fetch(
+      `/api/cessca/proposals/${encodeURIComponent(proposal.id)}/file`,
+      { headers: getAuthHeaders() }
+    );
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Unable to access proposal file.');
+    }
+    return response.blob();
+  }
+
   async function handleProposalDownload(proposal: ProposalSubmission) {
     setProposalActionId(proposal.id);
+    setProposalAction('download');
     setProposalError(null);
     try {
-      const response = await fetch(
-        `/api/cessca/proposals/${encodeURIComponent(proposal.id)}/file`,
-        { headers: getAuthHeaders() }
-      );
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Unable to download proposal file.');
-      }
-      const fileUrl = URL.createObjectURL(await response.blob());
+      const file = await fetchProposalFile(proposal);
+      const fileUrl = URL.createObjectURL(file);
       const anchor = document.createElement('a');
       anchor.href = fileUrl;
       anchor.download = proposal.fileName;
@@ -243,6 +275,30 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
       setProposalError(error instanceof Error ? error.message : 'Unable to download proposal file.');
     } finally {
       setProposalActionId(null);
+      setProposalAction(null);
+    }
+  }
+
+  async function handleProposalPreview(proposal: ProposalSubmission) {
+    setProposalActionId(proposal.id);
+    setProposalAction('preview');
+    setProposalError(null);
+    try {
+      const file = await fetchProposalFile(proposal);
+      const contentType = file.type.split(';', 1)[0].trim().toLowerCase();
+      if (!PREVIEWABLE_PROPOSAL_CONTENT_TYPES.has(contentType)) {
+        throw new Error('This file type cannot be previewed. Use Download to open it.');
+      }
+      setProposalPreview({
+        url: URL.createObjectURL(file),
+        fileName: proposal.fileName,
+        contentType,
+      });
+    } catch (error) {
+      setProposalError(error instanceof Error ? error.message : 'Unable to preview proposal file.');
+    } finally {
+      setProposalActionId(null);
+      setProposalAction(null);
     }
   }
 
@@ -251,6 +307,7 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
       return;
     }
     setProposalActionId(proposal.id);
+    setProposalAction('delete');
     setProposalError(null);
     try {
       const response = await fetch(`/api/cessca/proposals/${encodeURIComponent(proposal.id)}`, {
@@ -267,6 +324,7 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
       setProposalError(error instanceof Error ? error.message : 'Unable to delete proposal file.');
     } finally {
       setProposalActionId(null);
+      setProposalAction(null);
     }
   }
 
@@ -327,8 +385,8 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
         </div>
 
         <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-relaxed text-emerald-950">
-          Files are stored privately and only downloadable by CESSCA administrators. Attachments
-          are never rendered inline; download them before opening.
+          Files remain private to CESSCA administrators. PDFs and common image files can be previewed
+          here; other file types can still be downloaded.
         </p>
 
         {proposalError && (
@@ -365,6 +423,19 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
                       )}
                     </div>
                     <div className="flex shrink-0 gap-2">
+                      {isPreviewableProposal(proposal) && (
+                        <button
+                          type="button"
+                          disabled={proposalActionId !== null}
+                          onClick={() => void handleProposalPreview(proposal)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-800 transition hover:bg-emerald-50 disabled:opacity-50"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          {proposalActionId === proposal.id && proposalAction === 'preview'
+                            ? 'Opening...'
+                            : 'Preview'}
+                        </button>
+                      )}
                       <button
                         type="button"
                         disabled={proposalActionId !== null}
@@ -372,7 +443,9 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
                         className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-800 px-3 py-2 text-xs font-medium text-white transition hover:bg-emerald-900 disabled:opacity-50"
                       >
                         <FileDown className="h-3.5 w-3.5" />
-                        {proposalActionId === proposal.id ? 'Working...' : 'Download'}
+                        {proposalActionId === proposal.id && proposalAction === 'download'
+                          ? 'Working...'
+                          : 'Download'}
                       </button>
                       <button
                         type="button"
@@ -381,7 +454,9 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
                         className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        Delete
+                        {proposalActionId === proposal.id && proposalAction === 'delete'
+                          ? 'Deleting...'
+                          : 'Delete'}
                       </button>
                     </div>
                   </div>
@@ -396,6 +471,50 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
             </div>
           )}
         </section>
+
+        {proposalPreview && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Preview ${proposalPreview.fileName}`}
+            onClick={() => setProposalPreview(null)}
+          >
+            <div
+              className="flex h-[min(92vh,900px)] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-stone-200 px-4 py-3">
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-stone-900">File preview</h2>
+                  <p className="break-all text-xs text-stone-600">{proposalPreview.fileName}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setProposalPreview(null)}
+                  className="shrink-0 rounded-lg border border-stone-300 px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-50"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 bg-stone-100 p-2 sm:p-4">
+                {proposalPreview.contentType === 'application/pdf' ? (
+                  <iframe
+                    src={proposalPreview.url}
+                    title={`Preview of ${proposalPreview.fileName}`}
+                    className="h-full w-full rounded border border-stone-300 bg-white"
+                  />
+                ) : (
+                  <img
+                    src={proposalPreview.url}
+                    alt={proposalPreview.fileName}
+                    className="h-full w-full object-contain"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     );
   }

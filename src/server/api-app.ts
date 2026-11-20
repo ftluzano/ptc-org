@@ -18,6 +18,14 @@ import type {
 
 const MAX_PROPOSAL_SIZE_BYTES = 25 * 1024 * 1024;
 
+function rejectIfBlobIsUnconfigured(res: Response): boolean {
+  if (process.env.BLOB_READ_WRITE_TOKEN?.trim()) return false;
+  res.status(503).json({
+    error: 'Blob uploads are not configured. Set BLOB_READ_WRITE_TOKEN in the server environment and restart the server.',
+  });
+  return true;
+}
+
 interface AuthenticatedRequest extends Request {
   authUser?: AuthUser | null;
   authError?: string;
@@ -266,6 +274,19 @@ function mapRowToProposal(row: Record<string, unknown>): ProposalSubmission {
 
 function safeDownloadName(fileName: string): string {
   return fileName.replace(/[\r\n"\\/]/g, '_').slice(0, 255) || 'proposal-file';
+}
+
+const INLINE_PROPOSAL_CONTENT_TYPES = new Set([
+  'application/pdf',
+  'image/gif',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
+
+function getInlineProposalContentType(value: unknown): string | null {
+  const contentType = String(value ?? '').split(';', 1)[0].trim().toLowerCase();
+  return INLINE_PROPOSAL_CONTENT_TYPES.has(contentType) ? contentType : null;
 }
 
 function isValidProposalPath(pathname: string, requiredPrefix: string): boolean {
@@ -1004,6 +1025,7 @@ export async function createApiApp() {
 
   app.post('/api/posts/upload', async (req: AuthenticatedRequest, res: Response) => {
     try {
+      if (rejectIfBlobIsUnconfigured(res)) return;
       const body = req.body as HandleUploadBody;
       const result = await handleUpload({
         body,
@@ -1035,6 +1057,7 @@ export async function createApiApp() {
 
   app.post('/api/proposals/upload', async (req: AuthenticatedRequest, res: Response) => {
     try {
+      if (rejectIfBlobIsUnconfigured(res)) return;
       const body = req.body as HandleUploadBody;
       const result = await handleUpload({
         body,
@@ -1179,7 +1202,7 @@ export async function createApiApp() {
         return res.status(403).json({ error: 'CESSCA administrator privileges required.' });
       }
       const result = await getCentralDb().execute({
-        sql: 'SELECT file_name, pathname FROM proposal_submissions WHERE id = ? LIMIT 1',
+        sql: 'SELECT file_name, pathname, content_type FROM proposal_submissions WHERE id = ? LIMIT 1',
         args: [String(req.params.id)],
       });
       const row = result.rows[0];
@@ -1192,8 +1215,12 @@ export async function createApiApp() {
       }
       const fileName = safeDownloadName(String(row.file_name));
       const fallbackFileName = fileName.replace(/[^\x20-\x7E]/g, '_');
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${fallbackFileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+      const inlineContentType = getInlineProposalContentType(row.content_type);
+      res.setHeader('Content-Type', inlineContentType ?? 'application/octet-stream');
+      res.setHeader(
+        'Content-Disposition',
+        `${inlineContentType ? 'inline' : 'attachment'}; filename="${fallbackFileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+      );
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Cache-Control', 'private, no-store');
       return Readable.fromWeb(

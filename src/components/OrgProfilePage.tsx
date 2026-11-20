@@ -970,7 +970,7 @@ export function OrgProfilePage({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g., Annual General Assembly & Tech Talk"
-                    className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
+                    className="w-full px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
                   />
                 </div>
 
@@ -984,7 +984,7 @@ export function OrgProfilePage({
                     required
                     value={eventDate}
                     onChange={(e) => setEventDate(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
+                    className="w-full px-3 py-2 text-sm text-stone-900 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
                   />
                 </div>
               </div>
@@ -1002,7 +1002,7 @@ export function OrgProfilePage({
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder="Write the full announcement caption, venue, time, and registration notes for PTC students..."
-                  className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
+                  className="w-full px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534]"
                 />
               </div>
 
@@ -1111,7 +1111,7 @@ export function OrgProfilePage({
                   value={proposalTitle}
                   onChange={(event) => setProposalTitle(event.target.value)}
                   placeholder="e.g., Student Leadership Workshop"
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
                 />
               </div>
 
@@ -1126,7 +1126,7 @@ export function OrgProfilePage({
                   value={proposalMessage}
                   onChange={(event) => setProposalMessage(event.target.value)}
                   placeholder="Add context or instructions for reviewing your attached file."
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm leading-relaxed focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm leading-relaxed text-stone-900 placeholder:text-stone-400 focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20"
                 />
               </div>
 

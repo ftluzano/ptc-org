@@ -201,7 +201,6 @@ export function OrgProfilePage({
               handleUploadUrl: '/api/posts/upload',
               headers: getAuthHeaders(),
               contentType: file.type,
-              multipart: true,
             });
             return {
               attachment: {
@@ -472,7 +471,6 @@ export function OrgProfilePage({
         handleUploadUrl: '/api/proposals/upload',
         headers: getAuthHeaders(),
         contentType: proposalFile.type || 'application/octet-stream',
-        multipart: true,
       });
       const response = await fetch('/api/proposals', {
         method: 'POST',

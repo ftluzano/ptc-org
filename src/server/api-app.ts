@@ -1,7 +1,7 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
-import { del as deleteBlob, get as getBlob, head as headBlob } from '@vercel/blob';
+import { del as deleteBlob, get as getBlob, head as headBlob, put as putBlob } from '@vercel/blob';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import {
   ORGANIZATIONS,
@@ -1026,32 +1026,38 @@ export async function createApiApp() {
   app.post('/api/posts/upload', async (req: AuthenticatedRequest, res: Response) => {
     try {
       if (rejectIfBlobIsUnconfigured(res)) return;
-      const body = req.body as HandleUploadBody;
-      const result = await handleUpload({
-        body,
-        request: req,
-        onBeforeGenerateToken: async (pathname) => {
-          const user = req.authUser;
-          if (!user || user.role !== 'president' || !user.orgCode) {
-            throw new Error('Only an authenticated organization officer may upload post images.');
-          }
-          const requiredPrefix = `posts/${user.orgCode}/${user.uid}/`;
-          if (!isValidProposalPath(pathname, requiredPrefix)) {
-            throw new Error('Invalid post image upload path.');
-          }
-          return {
-            allowedContentTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
-            maximumSizeInBytes: 5 * 1024 * 1024,
-            addRandomSuffix: true,
-          };
-        },
+      const user = req.authUser;
+      if (!user || user.role !== 'president' || !user.orgCode) {
+        return res.status(403).json({ error: 'Only an authenticated organization officer may upload post images.' });
+      }
+
+      const pathname = String(req.body?.pathname ?? '').trim();
+      const requiredPrefix = `posts/${user.orgCode}/${user.uid}/`;
+      if (!isValidProposalPath(pathname, requiredPrefix)) {
+        return res.status(400).json({ error: 'Invalid post image upload path.' });
+      }
+
+      const dataUrl = String(req.body?.dataUrl ?? '');
+      const match = dataUrl.match(
+        /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/]+={0,2})$/
+      );
+      if (!match) {
+        return res.status(400).json({ error: 'Choose a PNG, JPEG, WebP, or GIF image.' });
+      }
+
+      const image = Buffer.from(match[2], 'base64');
+      if (image.byteLength === 0 || image.byteLength > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Images must be larger than 0 bytes and no larger than 5 MB.' });
+      }
+
+      const blob = await putBlob(pathname, image, {
+        access: 'public',
+        contentType: match[1],
       });
-      return res.json(result);
+      return res.json({ url: blob.url });
     } catch (error) {
-      console.error('Post image upload authorization failed:', error);
-      return res.status(400).json({
-        error: error instanceof Error ? error.message : 'Unable to authorize this image upload.',
-      });
+      console.error('Failed to upload post image to Vercel Blob:', error);
+      return res.status(502).json({ error: 'Failed to store image in Vercel Blob.' });
     }
   });
 

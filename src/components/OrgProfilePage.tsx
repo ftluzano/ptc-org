@@ -196,17 +196,26 @@ export function OrgProfilePage({
           try {
             const previewUrl = await readImageAsDataUrl(file);
             const pathname = `posts/${org.code}/${user?.uid}/${crypto.randomUUID()}`;
-            const blob = await upload(pathname, file, {
-              access: 'public',
-              handleUploadUrl: '/api/posts/upload',
-              headers: getAuthHeaders(),
-              contentType: file.type,
+            const response = await fetch('/api/posts/upload', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders(),
+              },
+              body: JSON.stringify({ pathname, dataUrl: previewUrl }),
             });
+            const data = await response.json();
+            if (!response.ok) {
+              throw new Error(data.error || 'Unable to upload image.');
+            }
+            if (typeof data.url !== 'string' || data.url.length === 0) {
+              throw new Error('The image upload did not return a file URL.');
+            }
             return {
               attachment: {
                 id: crypto.randomUUID(),
                 previewUrl,
-                uploadedUrl: blob.url,
+                uploadedUrl: data.url,
               },
             };
           } catch (error) {

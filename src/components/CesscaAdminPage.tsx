@@ -285,12 +285,13 @@ export function CesscaAdminPage({ onSelectOrg, onOpenLogin, onOpenLightbox }: Ce
     setProposalError(null);
     try {
       const file = await fetchProposalFile(proposal);
-      const contentType = file.type.split(';', 1)[0].trim().toLowerCase();
+      const contentType = proposal.contentType.split(';', 1)[0].trim().toLowerCase();
       if (!PREVIEWABLE_PROPOSAL_CONTENT_TYPES.has(contentType)) {
         throw new Error('This file type cannot be previewed. Use Download to open it.');
       }
+      const previewFile = new Blob([file], { type: contentType });
       setProposalPreview({
-        url: URL.createObjectURL(file),
+        url: URL.createObjectURL(previewFile),
         fileName: proposal.fileName,
         contentType,
       });
